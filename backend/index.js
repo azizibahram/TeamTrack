@@ -4,6 +4,8 @@ const cors = require('cors');
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 const CACHE_FILE = path.join(__dirname, 'cache.json');
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
@@ -26,6 +28,13 @@ async function saveCache(data) {
 }
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../frontend')));
@@ -264,4 +273,19 @@ app.get('/api/employees', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Real-time updates
+let lastData = null;
+setInterval(async () => {
+    try {
+        const data = await getEmployeesData();
+        if (!lastData || JSON.stringify(data) !== JSON.stringify(lastData)) {
+            lastData = data;
+            io.emit('update', data);
+            console.log('Data updated, emitted to clients');
+        }
+    } catch (error) {
+        console.error('Error in real-time update:', error);
+    }
+}, 30000); // Check for updates every 30 seconds
