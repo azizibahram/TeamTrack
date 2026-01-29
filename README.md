@@ -20,14 +20,6 @@ A modern, real-time employee dashboard that integrates with Slack to display emp
 - 🎨 **Modern UI**: Dark theme with animated backgrounds and smooth transitions
 - ⚡ **Performance Optimized**: Caching system for fast loading times
 
-## Technology Stack
-
-- **Frontend**: HTML, CSS ([Tailwind CSS](https://tailwindcss.com/)), JavaScript, [Socket.io](https://socket.io/) for real-time updates
-- **Backend**: [Node.js](https://nodejs.org/), [Express.js](https://expressjs.com/), [Socket.io](https://socket.io/)
-- **APIs**: [Slack API](https://api.slack.com/) (for users, messages, and Jibble integration via Slack)
-- **Data Tables**: [jQuery DataTables](https://datatables.net/) for interactive tables
-- **Caching**: File-based caching for performance optimization
-
 ## Project Structure
 
 ```
