@@ -2,7 +2,28 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const fs = require('fs').promises;
 const path = require('path');
+const CACHE_FILE = path.join(__dirname, 'cache.json');
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+// Cache functions
+async function loadCache() {
+    try {
+        const data = await fs.readFile(CACHE_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        return null;
+    }
+}
+
+async function saveCache(data) {
+    try {
+        await fs.writeFile(CACHE_FILE, JSON.stringify(data, null, 2));
+    } catch (error) {
+        console.error('Error saving cache:', error.message);
+    }
+}
 
 const app = express();
 app.use(cors());
@@ -11,13 +32,33 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Slack API functions
 async function getSlackUsers() {
+    const cache = await loadCache();
+    const now = Date.now();
+
+    // Check if users are cached and recent
+    if (cache && cache.users && (now - cache.lastUpdated) < CACHE_DURATION) {
+        return cache.users;
+    }
+
     try {
         const token = process.env.SLACK_BOT_TOKEN;
         const response = await axios.get('https://slack.com/api/users.list', {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!response.data.ok) throw new Error(response.data.error);
-        return response.data.members;
+
+        const users = response.data.members;
+
+        // Cache the users
+        if (!cache) {
+            await saveCache({ users: users, lastUpdated: now });
+        } else {
+            cache.users = users;
+            cache.lastUpdated = now;
+            await saveCache(cache);
+        }
+
+        return users;
     } catch (error) {
         console.error('Error fetching Slack users:', error.message);
         return [];
@@ -25,6 +66,15 @@ async function getSlackUsers() {
 }
 
 async function getUserProfile(userId) {
+    const cache = await loadCache();
+    const now = Date.now();
+
+    // Check if profile is cached and recent
+    if (cache && cache.profiles && cache.profiles[userId] &&
+        (now - cache.profiles[userId].lastUpdated) < CACHE_DURATION) {
+        return cache.profiles[userId].data;
+    }
+
     try {
         const token = process.env.SLACK_BOT_TOKEN;
         const response = await axios.get('https://slack.com/api/users.profile.get', {
@@ -32,7 +82,20 @@ async function getUserProfile(userId) {
             params: { user: userId }
         });
         if (!response.data.ok) throw new Error(response.data.error);
-        return response.data.profile;
+
+        const profile = response.data.profile;
+
+        // Cache the profile
+        if (!cache) {
+            await saveCache({ profiles: { [userId]: { data: profile, lastUpdated: now } }, lastUpdated: now });
+        } else {
+            if (!cache.profiles) cache.profiles = {};
+            cache.profiles[userId] = { data: profile, lastUpdated: now };
+            cache.lastUpdated = now;
+            await saveCache(cache);
+        }
+
+        return profile;
     } catch (error) {
         console.error('Error fetching user profile:', error.message);
         return {};
