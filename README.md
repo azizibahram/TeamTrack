@@ -1,23 +1,32 @@
 # TeamTrack - Employee Dashboard
 
-A modern, real-time employee dashboard that integrates Slack and Jibble to display employee information, tasks, and attendance data.
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://api.slack.com/)
+
+A modern, real-time employee dashboard that integrates with Slack to display employee information, tasks, attendance data (via Jibble), and department news with automatic updates.
 
 ## Features
 
-- **Employee Profiles**: Display employee photos, names, emails, and roles from Slack
-- **Task Management**: Fetch and display latest tasks from Slack channels
-- **Attendance Tracking**: Real-time attendance status from Jibble integration
-- **Weekly Reports**: Comprehensive weekly attendance and task summaries
-- **News Feed**: Software department news from Slack channels
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
-- **Modern UI**: Dark theme with animated backgrounds and smooth transitions
+- 🚀 **Real-time Updates**: Automatic dashboard refresh when Slack data changes
+- 👥 **Employee Profiles**: Display employee photos, names, emails, and roles from Slack
+- 📋 **Task Management**: Fetch and display latest tasks from Slack channels
+- ⏰ **Attendance Tracking**: Real-time attendance status from Jibble via Slack integration
+- 📊 **Weekly Reports**: Comprehensive weekly attendance and task summaries
+- 📰 **News Feed**: Software department news from Slack channels
+- 📱 **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- 🎨 **Modern UI**: Dark theme with animated backgrounds and smooth transitions
+- ⚡ **Performance Optimized**: Caching system for fast loading times
 
 ## Technology Stack
 
-- **Frontend**: HTML, CSS (Tailwind CSS), JavaScript
-- **Backend**: Node.js, Express.js
-- **APIs**: Slack API, Jibble API
-- **Data Tables**: jQuery DataTables for interactive tables
+- **Frontend**: HTML, CSS ([Tailwind CSS](https://tailwindcss.com/)), JavaScript, [Socket.io](https://socket.io/) for real-time updates
+- **Backend**: [Node.js](https://nodejs.org/), [Express.js](https://expressjs.com/), [Socket.io](https://socket.io/)
+- **APIs**: [Slack API](https://api.slack.com/) (for users, messages, and Jibble integration via Slack)
+- **Data Tables**: [jQuery DataTables](https://datatables.net/) for interactive tables
+- **Caching**: File-based caching for performance optimization
 
 ## Project Structure
 
@@ -88,19 +97,18 @@ TeamTrack/
 
 ### Slack Setup
 
-1. Create a Slack app in your workspace
+1. Create a Slack app in your workspace at [Slack API](https://api.slack.com/apps)
 2. Add the following bot token scopes:
-   - `users:read`
-   - `users:read.email`
-   - `channels:read`
-   - `channels:history`
+   - `users:read` - Read user information
+   - `users:read.email` - Read user email addresses
+   - `channels:read` - Read channel information
+   - `channels:history` - Read channel message history
 3. Install the app to your workspace
-4. Get the bot token and channel IDs
+4. Get the bot token and channel IDs for tasks and news channels
 
-### Jibble Setup
+### Jibble Integration
 
-1. Obtain your Jibble API token
-2. Ensure your account has access to attendance data
+Jibble attendance data is integrated through Slack channels. Ensure your Slack workspace has Jibble bot integration that posts attendance updates to a designated channel.
 
 ## Usage
 
