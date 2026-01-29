@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamTrack - Employee Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.tailwindcss.min.css">
+    <link rel="icon" href="Logo2.png" type="image/png">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.tailwindcss.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-black via-gray-900 to-black min-h-screen p-4 relative">
+    <div id="loading" class="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
+        <div class="text-center">
+            <img src="Logo2.png" alt="TeamTrack Logo" class="w-32 h-32 mx-auto mb-4 animate-bounce">
+            <p class="text-white text-xl font-semibold animate-pulse">Loading TeamTrack Dashboard...</p>
+            <div class="mt-4">
+                <div class="inline-block w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
+    </div>
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20 animate-float"></div>
+    <div class="absolute inset-0 bg-gradient-to-tl from-purple-900/20 via-transparent to-indigo-900/20 animate-pulse-slow"></div>
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-start mb-12 animate-fade-in">
+            <div class="flex items-center">
+                <img src="Logo2.png" alt="TeamTrack Logo" class="w-16 h-16 mr-4 animate-bounce">
+                <div>
+                    <h1 class="text-5xl font-extrabold text-white mb-4 drop-shadow-lg">
+                        <i class="fas fa-users text-cyan-400"></i> TeamTrack Dashboard
+                    </h1>
+                    <p class="text-xl text-gray-300">Real-time employee insights and updates</p>
+                </div>
+            </div>
+            <div class="flex flex-row space-x-4">
+                <div id="azizi-profile" class="text-right bg-white bg-opacity-10 backdrop-blur-lg p-4 rounded-xl shadow-2xl border border-white border-opacity-20 flex-1">
+                    <div class="flex items-center mb-2">
+                        <img id="azizi-photo" class="w-12 h-12 rounded-full mr-3 border-2 border-cyan-400 shadow-lg">
+                        <div>
+                            <h2 class="text-lg font-bold text-white">Azizi</h2>
+                            <p class="text-sm text-cyan-300">HOD of Software Department</p>
+                        </div>
+                    </div>
+                    <div id="azizi-message" class="text-sm text-gray-200"></div>
+                </div>
+                <div id="news" class="bg-white bg-opacity-10 backdrop-blur-lg p-4 rounded-xl shadow-2xl border border-white border-opacity-20 flex-1">
+                    <h3 class="text-lg font-bold text-white mb-2">Software Department News</h3>
+                    <div id="news-content"></div>
+                </div>
+            </div>
+        </header>
+
+        <div id="employees" class="mb-12">
+            <h2 class="text-3xl font-bold text-center mb-8 animate-fade-in text-white drop-shadow-lg">Today's Tasks and Attendance</h2>
+            <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden border border-white border-opacity-20">
+                <table id="employees-table" class="w-full table-auto">
+                    <thead class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Photo</th>
+                            <th class="px-4 py-3 text-left">Name</th>
+                            <th class="px-4 py-3 text-left">Email</th>
+                            <th class="px-4 py-3 text-left">Role</th>
+                            <th class="px-4 py-3 text-left">Today's Tasks</th>
+                            <th class="px-4 py-3 text-left">Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white divide-opacity-20"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="weekly-report" class="mt-12"></div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
