@@ -142,7 +142,7 @@ async function getChannelMessages(channelId, limit = 100) {
 }
 
 // Attendance from Slack channel
-async function getAttendanceFromSlack() {
+async function getAttendanceFromSlack(weekOffset = 0) {
     try {
         const channelName = process.env.SLACK_ATTENDANCE_CHANNEL_ID;
         const channelId = await getChannelIdByName(channelName);
@@ -150,7 +150,7 @@ async function getAttendanceFromSlack() {
             console.error('Attendance channel not found');
             return {};
         }
-        const messages = await getChannelMessages(channelId, 200); // Get more messages
+        const messages = await getChannelMessages(channelId, 1000); // Get more messages for historical data
         console.log('Messages fetched for attendance:', messages.length);
         const weeklyAttendance = {};
         // Name mapping for mismatches between Jibble and Slack names
@@ -159,15 +159,23 @@ async function getAttendanceFromSlack() {
             // Add more mappings as needed
         };
 
-        // Get start of week (Saturday)
+        // Calculate the target week based on weekOffset
+        // weekOffset = 0 means current week, 1 means last week, etc.
         const now = new Date();
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - (now.getDay() + 1) % 7);
-        startOfWeek.setHours(0, 0, 0, 0);
+        const targetWeekStart = new Date(now);
+        targetWeekStart.setDate(now.getDate() - (now.getDay() + 1) % 7 - (weekOffset * 7));
+        targetWeekStart.setHours(0, 0, 0, 0);
+        
+        const targetWeekEnd = new Date(targetWeekStart);
+        targetWeekEnd.setDate(targetWeekStart.getDate() + 7);
+        targetWeekEnd.setHours(0, 0, 0, 0);
+
+        console.log(`Fetching attendance for week offset ${weekOffset}:`, targetWeekStart.toDateString(), 'to', targetWeekEnd.toDateString());
 
         for (const msg of messages.reverse()) { // Process newest first
             const msgDate = new Date(msg.ts * 1000);
-            if (msgDate < startOfWeek) continue; // Only this week's messages
+            // Only include messages from the target week
+            if (msgDate < targetWeekStart || msgDate >= targetWeekEnd) continue;
             const text = msg.text;
             // Parse Jibble messages: "Name *jibbled in/out* via ..."
             const match = text.match(/^(.+?) \*jibbled (in|out)\*/i);
@@ -176,11 +184,19 @@ async function getAttendanceFromSlack() {
                 // Apply name mapping if exists
                 if (nameMap[name]) name = nameMap[name];
                 const action = match[2].toLowerCase();
-                const status = action === 'in' ? 'Present' : 'Absent';
-                const day = msgDate.toLocaleDateString('en-US', { weekday: 'long' });
-                if (!weeklyAttendance[day]) weeklyAttendance[day] = {};
-                // Update with latest status for the day
-                weeklyAttendance[day][name] = status;
+                // Only count 'jibbled in' for attendance, ignore 'jibbled out'
+                if (action === 'in') {
+                    // Check if check-in time is before or at 9:00 AM
+                    const checkInHour = msgDate.getHours();
+                    const checkInMinute = msgDate.getMinutes();
+                    // If check-in is after 9:00 AM, mark as Absent
+                    const isLate = checkInHour > 9 || (checkInHour === 9 && checkInMinute > 0);
+                    const status = isLate ? 'Absent' : 'Present';
+                    const day = msgDate.toLocaleDateString('en-US', { weekday: 'long' });
+                    if (!weeklyAttendance[day]) weeklyAttendance[day] = {};
+                    // Update with latest status for the day
+                    weeklyAttendance[day][name] = status;
+                }
             }
         }
         // Also create current attendance map
@@ -200,7 +216,7 @@ async function getAttendanceFromSlack() {
 }
 
 // Aggregate data
-async function getEmployeesData() {
+async function getEmployeesData(weekOffset = 0) {
     const users = await getSlackUsers();
     const tasksChannelId = await getChannelIdByName(process.env.SLACK_CHANNEL_ID);
     if (!tasksChannelId) {
@@ -208,17 +224,21 @@ async function getEmployeesData() {
         return [];
     }
     const messages = await getChannelMessages(tasksChannelId);
-    const { current: currentAttendance, weekly: weeklyAttendance } = await getAttendanceFromSlack();
-    // Get news from general channel
+    const { current: currentAttendance, weekly: weeklyAttendance } = await getAttendanceFromSlack(weekOffset);
+    // Get news from general channel - only today's messages
     const newsChannelId = await getChannelIdByName(process.env.SLACK_NEWS_CHANNEL_ID);
     let news = [];
     if (newsChannelId) {
-        const newsMessages = await getChannelMessages(newsChannelId, 10);
-        news = newsMessages.slice(0, 5).map(msg => {
-            const user = users.find(u => u.id === msg.user);
-            const userName = user ? user.real_name || user.name : 'Unknown';
-            return { text: msg.text, user: userName, timestamp: msg.ts };
-        });
+        const newsMessages = await getChannelMessages(newsChannelId, 50);
+        const today = new Date().toDateString();
+        news = newsMessages
+            .filter(msg => new Date(msg.ts * 1000).toDateString() === today)
+            .slice(0, 5)
+            .map(msg => {
+                const user = users.find(u => u.id === msg.user);
+                const userName = user ? user.real_name || user.name : 'Unknown';
+                return { text: msg.text, user: userName, timestamp: msg.ts };
+            });
     }
 
     const employees = [];
@@ -264,8 +284,9 @@ async function getEmployeesData() {
 // API endpoint
 app.get('/api/employees', async (req, res) => {
     try {
-        const { employees, news, weeklyAttendance } = await getEmployeesData();
-        res.json({ employees, news, weeklyAttendance });
+        const weekOffset = parseInt(req.query.weekOffset) || 0;
+        const { employees, news, weeklyAttendance } = await getEmployeesData(weekOffset);
+        res.json({ employees, news, weeklyAttendance, weekOffset });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });
@@ -279,7 +300,7 @@ server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 let lastData = null;
 setInterval(async () => {
     try {
-        const data = await getEmployeesData();
+        const data = await getEmployeesData(0); // Always update current week data
         if (!lastData || JSON.stringify(data) !== JSON.stringify(lastData)) {
             lastData = data;
             io.emit('update', data);

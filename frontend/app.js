@@ -77,15 +77,25 @@ async function updateUI(data) {
             "ordering": true,
             "info": true,
             "autoWidth": false,
-            "responsive": true
+            "responsive": true,
+            "pageLength": 12
         });
     }
 
     // Display weekly report
     const reportDiv = document.getElementById('weekly-report');
     if (weeklyAttendance && Object.keys(weeklyAttendance).length > 0) {
+        // Calculate week label based on currentWeekOffset
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - (now.getDay() + 1) % 7 - (currentWeekOffset * 7));
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        const formatDate = (date) => `${date.getMonth() + 1}/${date.getDate()}`;
+        const weekLabel = currentWeekOffset === 0 ? 'This Week Report' : `Week Report: ${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+        
         reportDiv.innerHTML = `
-            <h2 class="text-3xl font-bold text-center mb-8 animate-fade-in text-white drop-shadow-lg">This Week Report</h2>
+            <h2 class="text-3xl font-bold text-center mb-8 animate-fade-in text-white drop-shadow-lg">${weekLabel}</h2>
             <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden border border-white border-opacity-20">
                 <table id="weekly-table" class="w-full table-auto">
                     <thead class="bg-gradient-to-r from-purple-500 to-pink-600 text-white">
@@ -158,9 +168,95 @@ async function updateUI(data) {
                 "ordering": true,
                 "info": true,
                 "autoWidth": false,
-                "responsive": true
+                "responsive": true,
+                "pageLength": 12
             });
         }
+    }
+}
+
+let currentWeekOffset = 0;
+
+// Generate week tabs HTML - directly into the container
+function generateWeekTabs() {
+    const container = document.getElementById('week-tabs-container');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div id="week-tabs" class="flex flex-wrap justify-center gap-2 mb-6">
+            ${generateWeekTabButtons()}
+        </div>
+    `;
+    
+    // Attach event listeners after DOM insertion
+    attachTabEventListeners();
+}
+
+// Generate HTML for week tab buttons
+function generateWeekTabButtons() {
+    let buttonsHtml = '';
+    for (let i = 0; i < 8; i++) {
+        const isActive = i === 0;
+        const activeClass = isActive
+            ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
+            : 'bg-white bg-opacity-10 text-gray-300 hover:bg-opacity-20 hover:text-white';
+        
+        // Calculate week label
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - (now.getDay() + 1) % 7 - (i * 7));
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        const formatDate = (date) => `${date.getMonth() + 1}/${date.getDate()}`;
+        const label = i === 0 ? 'This Week' : `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+        
+        buttonsHtml += `<button type="button" class="week-tab px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${activeClass}" data-week-offset="${i}">${label}</button>`;
+    }
+    return buttonsHtml;
+}
+
+// Attach click event listeners to week tabs
+function attachTabEventListeners() {
+    const tabs = document.querySelectorAll('#week-tabs .week-tab');
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            const weekOffset = parseInt(this.dataset.weekOffset);
+            console.log('Tab clicked, week offset:', weekOffset);
+            switchWeek(weekOffset);
+        });
+    });
+}
+
+// Switch to a different week
+async function switchWeek(weekOffset) {
+    if (weekOffset === currentWeekOffset) return;
+    
+    currentWeekOffset = weekOffset;
+    
+    // Update tab styles
+    const tabs = document.querySelectorAll('#week-tabs .week-tab');
+    tabs.forEach((tab) => {
+        const tabOffset = parseInt(tab.dataset.weekOffset);
+        if (tabOffset === weekOffset) {
+            tab.className = 'week-tab px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg';
+        } else {
+            tab.className = 'week-tab px-4 py-2 rounded-lg font-semibold transition-all duration-300 bg-white bg-opacity-10 text-gray-300 hover:bg-opacity-20 hover:text-white';
+        }
+    });
+    
+    // Show loading
+    document.getElementById('loading').style.display = 'flex';
+    
+    try {
+        const response = await fetch(`http://localhost:3000/api/employees?weekOffset=${weekOffset}`);
+        const data = await response.json();
+        updateUI(data);
+        document.getElementById('loading').style.display = 'none';
+    } catch (error) {
+        console.error('Error fetching week data:', error);
+        document.getElementById('loading').style.display = 'none';
     }
 }
 
@@ -168,15 +264,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch('http://localhost:3000/api/employees');
         const data = await response.json();
+        
+        // Generate week tabs
+        generateWeekTabs();
+        
         updateUI(data);
         // Hide loading screen
         document.getElementById('loading').style.display = 'none';
 
-        // Connect to Socket.io for real-time updates
+        // Connect to Socket.io for real-time updates (only for current week)
         const socket = io();
         socket.on('update', (newData) => {
             console.log('Received real-time update');
-            updateUI(newData);
+            // Only update if viewing current week
+            if (currentWeekOffset === 0) {
+                updateUI(newData);
+            }
         });
     } catch (error) {
         console.error('Error fetching employees:', error);
