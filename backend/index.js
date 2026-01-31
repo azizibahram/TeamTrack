@@ -156,7 +156,8 @@ async function getAttendanceFromSlack(weekOffset = 0) {
         // Name mapping for mismatches between Jibble and Slack names
         const nameMap = {
             "Nawid Sanginzai": "فدایی صاحب",
-            "Mahmood Sahil": "Sahil"
+            "Mahmood Sahil": "Sahil",
+            "Muhsen Omari": "omari"
             // Add more mappings as needed
         };
 
