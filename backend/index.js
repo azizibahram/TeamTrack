@@ -262,6 +262,7 @@ async function getEmployeesData(weekOffset = 0) {
             text: msg.text,
             timestamp: msg.ts
         }));
+        
         // This week: from Saturday to today
         const now = new Date();
         const startOfWeek = new Date(now);
@@ -271,6 +272,23 @@ async function getEmployeesData(weekOffset = 0) {
             text: msg.text,
             timestamp: msg.ts
         }));
+        
+        // Calculate daily task counts for the week (for streak calculation)
+        const dailyTaskCounts = {};
+        const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        days.forEach(day => {
+            dailyTaskCounts[day] = 0;
+        });
+        
+        userMessages.forEach(msg => {
+            const msgDate = new Date(msg.ts * 1000);
+            if (msgDate >= startOfWeek) {
+                const dayName = msgDate.toLocaleDateString('en-US', { weekday: 'long' });
+                if (dailyTaskCounts[dayName] !== undefined) {
+                    dailyTaskCounts[dayName]++;
+                }
+            }
+        });
 
         // Attendance: from Slack, default to Absent if no check-in this week
         const userAttendance = currentAttendance[user.real_name] || 'Absent';
@@ -282,6 +300,7 @@ async function getEmployeesData(weekOffset = 0) {
             role: profile.title || '',
             todayTasks,
             weekTasks,
+            dailyTaskCounts,
             attendance: userAttendance
         });
     }

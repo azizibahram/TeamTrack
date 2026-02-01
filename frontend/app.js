@@ -261,24 +261,25 @@ class LevelSystem {
         return streak;
     }
 
-    // Calculate task streak - consecutive days of posting tasks
+    // Calculate task streak - consecutive days of posting tasks from Saturday (Friday is vacation)
     calculateTaskStreak(employee, weeklyAttendance) {
-        // For task streak, we use weekTasks as indicator of activity
-        // In a real implementation, this would check daily task data
-        // For now, we'll estimate based on weekTasks count and today's tasks
+        if (!employee.dailyTaskCounts) {
+            return 0;
+        }
         
         let streak = 0;
+        // Week starts Saturday, ends Thursday (Friday is vacation)
+        const workDays = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
         
-        // If posted tasks today, start counting
-        if (employee.todayTasks.length > 0) {
-            streak = 1;
+        // Count consecutive days with tasks from Saturday forward
+        for (let i = 0; i < workDays.length; i++) {
+            const day = workDays[i];
+            const taskCount = employee.dailyTaskCounts[day] || 0;
             
-            // Estimate based on weekly tasks (assuming consistent posting)
-            // If they have 5+ week tasks, they likely posted daily
-            if (employee.weekTasks.length >= 5) {
-                streak = Math.min(7, employee.weekTasks.length); // Cap at 7 days
-            } else if (employee.weekTasks.length >= 3) {
-                streak = Math.min(3, employee.weekTasks.length);
+            if (taskCount > 0) {
+                streak++;
+            } else {
+                break; // Streak broken when no tasks on a work day
             }
         }
         
