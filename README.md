@@ -1,50 +1,77 @@
-# TeamTrack - Employee Dashboard
+# TeamTrack - Employee Performance Dashboard
 
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
-[![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://api.slack.com/)
+<p align="center">
+  <img src="frontend/Logo2.png" alt="TeamTrack Logo" width="120" />
+</p>
 
-A modern, real-time employee dashboard that integrates with Slack to display employee information, tasks, attendance data (via Jibble), and department news with automatic updates.
+<p align="center">
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js"></a>
+  <a href="https://expressjs.com/"><img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express.js"></a>
+  <a href="https://socket.io/"><img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white" alt="Socket.io"></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"></a>
+  <a href="https://api.slack.com/"><img src="https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white" alt="Slack"></a>
+</p>
 
-## Features
+<p align="center">
+  <strong>A modern, gamified employee dashboard with real-time Slack integration</strong>
+</p>
 
-- 🚀 **Real-time Updates**: Automatic dashboard refresh when Slack data changes
-- 👥 **Employee Profiles**: Display employee photos, names, emails, and roles from Slack
-- 📋 **Task Management**: Fetch and display latest tasks from Slack channels
-- ⏰ **Attendance Tracking**: Real-time attendance status from Jibble via Slack integration
-- 📊 **Weekly Reports**: Comprehensive weekly attendance and task summaries
-- 📰 **News Feed**: Software department news from Slack channels
-- 📱 **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
-- 🎨 **Modern UI**: Dark theme with animated backgrounds and smooth transitions
-- ⚡ **Performance Optimized**: Caching system for fast loading times
+---
 
-## Project Structure
+## ✨ Features
+
+### 🎮 Gamification System
+- **🏆 Employee Leaderboard** - Rankings based on weekly performance with Gold/Silver/Bronze podium
+- **🎯 Achievement Badges** - Earn badges for Early Bird, Active Poster, Perfect Week, Consistency, and Streaks
+- **📊 Team Goals** - Track department goals: Attendance Rate, Task Completion, On-Time Arrivals
+- **🔥 Dual Streaks** - Separate streak tracking for Attendance and Task Posting
+- **⭐ Top Performer Spotlight** - Highlight the #1 employee of the week
+
+### 📋 Core Functionality
+- **🚀 Real-time Updates** - WebSocket-powered live dashboard updates
+- **👥 Employee Profiles** - Slack-synced photos, names, emails, and roles
+- **📋 Task Management** - Daily and weekly task tracking from Slack channels
+- **⏰ Attendance Tracking** - Jibble integration via Slack with Present/Late/Absent status
+- **📊 Weekly Reports** - Comprehensive attendance and task summaries (Saturday-Thursday)
+- **📰 News Feed** - Department announcements from Slack channels
+- **📱 Responsive Design** - Optimized for desktop, tablet, and mobile
+
+### 🎨 Modern UI/UX
+- **Glassmorphism Design** - Frosted glass cards with backdrop blur effects
+- **Animated Backgrounds** - Floating gradient orbs and dynamic grid patterns
+- **Smooth Animations** - Staggered loading, hover effects, and transitions
+- **Dark Theme** - Professional dark mode with cyan/purple/pink accents
+- **Achievement Popups** - Confetti celebrations for earned badges
+
+---
+
+## 🏗️ Architecture
 
 ```
 TeamTrack/
 ├── backend/
-│   ├── index.js          # Main server file
-│   ├── package.json      # Backend dependencies
-│   ├── .env              # Environment variables (configure with your API keys)
-│   └── .gitignore        # Backend-specific ignores
+│   ├── index.js              # Express server with Socket.io
+│   ├── package.json          # Dependencies
+│   ├── .env                  # Environment configuration
+│   └── .gitignore
 ├── frontend/
-│   ├── index.html        # Main dashboard page
-│   ├── app.js            # Frontend JavaScript logic
-│   ├── style.css         # Custom CSS animations and styles
-│   └── Logo2.png         # Company logo
-└── README.md             # This file
+│   ├── index.html            # Dashboard UI
+│   ├── app.js                # Frontend logic & gamification
+│   ├── style.css             # Glassmorphism styles & animations
+│   └── Logo2.png             # Brand logo
+├── screenshots/              # UI screenshots
+└── README.md
 ```
 
-## Setup Instructions
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
-
-- Node.js (v14 or higher)
+- Node.js v14+
 - npm or yarn
-- Slack workspace with appropriate permissions
-- Jibble account with API access
+- Slack workspace with admin access
+- Jibble account (for attendance tracking)
 
 ### Installation
 
@@ -54,80 +81,133 @@ TeamTrack/
    cd TeamTrack
    ```
 
-2. **Backend Setup**
+2. **Install Backend Dependencies**
    ```bash
    cd backend
    npm install
    ```
 
-3. **Configure Environment Variables**
+3. **Configure Environment**
 
-   Copy the `.env` file and update with your API credentials:
-
+   Create `backend/.env`:
    ```env
+   # Slack Configuration
    SLACK_BOT_TOKEN=xoxb-your-slack-bot-token
-   SLACK_CHANNEL_ID=C1234567890  # Tasks channel ID
-   SLACK_NEWS_CHANNEL_ID=C0987654321  # News channel ID
-   JIBBLE_API_TOKEN=your-jibble-api-token
+   SLACK_CHANNEL_ID=your-tasks-channel-name
+   SLACK_NEWS_CHANNEL_ID=your-news-channel-name
+   SLACK_ATTENDANCE_CHANNEL_ID=your-jibble-channel-name
+   
+   # Server Configuration
    PORT=3000
    ```
 
-4. **Start the Backend**
+4. **Start the Server**
    ```bash
    npm start
-   # or for development
-   npm run dev
+   # Server runs on http://localhost:3000
    ```
 
-5. **Frontend Setup**
+5. **Access Dashboard**
+   
+   Open `http://localhost:3000` in your browser
 
-   Open `frontend/index.html` in your browser, or serve it via a local server.
+---
 
-   The frontend will connect to the backend running on `http://localhost:3000`.
+## ⚙️ Configuration
 
-## API Configuration
+### Slack App Setup
 
-### Slack Setup
-
-1. Create a Slack app in your workspace at [Slack API](https://api.slack.com/apps)
-2. Add the following bot token scopes:
-   - `users:read` - Read user information
-   - `users:read.email` - Read user email addresses
-   - `channels:read` - Read channel information
-   - `channels:history` - Read channel message history
+1. Create a new app at [Slack API](https://api.slack.com/apps)
+2. Add these **Bot Token Scopes**:
+   - `users:read` - Access user profiles
+   - `users:read.email` - Access email addresses
+   - `channels:read` - View channel information
+   - `channels:history` - Read channel messages
+   - `groups:history` - Read private channel messages
 3. Install the app to your workspace
-4. Get the bot token and channel IDs for tasks and news channels
+4. Copy the **Bot User OAuth Token** to your `.env` file
+5. Invite the bot to your tasks, news, and attendance channels
 
 ### Jibble Integration
 
-Jibble attendance data is integrated through Slack channels. Ensure your Slack workspace has Jibble bot integration that posts attendance updates to a designated channel.
+1. Connect Jibble to your Slack workspace
+2. Ensure Jibble posts check-in/out messages to a dedicated channel
+3. Set `SLACK_ATTENDANCE_CHANNEL_ID` to this channel's name
 
-## Usage
+---
 
-1. Start the backend server
-2. Open the frontend in a web browser
-3. The dashboard will load employee data, tasks, and attendance
-4. Use the interactive tables to filter and search employees
-5. View weekly reports and department news
+## 🎯 Gamification Scoring
 
-## Security Notes
+### Points System
+| Action | Points |
+|--------|--------|
+| Present (on-time) | +20 pts |
+| Late | +10 pts |
+| Task posted | +3 pts |
+| Daily activity bonus | +15 pts |
+| Early bird bonus | +10 pts |
 
-- API tokens are stored securely in environment variables
-- No sensitive data is exposed to the frontend
-- All API calls are made server-side
+### Achievement Badges
+- 🌅 **Early Bird** - Arrived before 9:00 AM
+- 📋 **Active Poster** - Posted tasks today
+- ✅ **Perfect Week** - 100% attendance this week
+- ⭐ **Consistent** - Posted tasks all week
+- 🔥 **On Fire!** - 5-day attendance streak
 
-## Contributing
+### Streak Calculation
+- **Attendance Streak**: Consecutive days Present/Late (Saturday-Thursday)
+- **Task Streak**: Consecutive days with posted tasks (Saturday-Thursday)
+- Friday is excluded (vacation day)
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Backend** | Node.js, Express.js, Socket.io |
+| **Frontend** | HTML5, CSS3, Vanilla JavaScript |
+| **Styling** | Tailwind CSS (CDN), Custom CSS |
+| **Real-time** | Socket.io (WebSockets) |
+| **APIs** | Slack Web API |
+| **Icons** | Font Awesome 6 |
+| **Animations** | CSS Keyframes, Canvas Confetti |
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screenshots/teamtrack_redesign.png" alt="TeamTrack Dashboard" width="800" />
+</p>
+
+---
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+---
 
-This project is proprietary software. All rights reserved.
+## 📝 License
 
-## Support
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-For support or questions, please contact the development team.
+---
+
+## 🙏 Acknowledgments
+
+- [Slack API](https://api.slack.com/) for workspace integration
+- [Jibble](https://www.jibble.io/) for attendance tracking
+- [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
+- [Font Awesome](https://fontawesome.com/) for beautiful icons
+
+---
+
+<p align="center">
+  <strong>Built with ❤️ for productive teams</strong>
+</p>
