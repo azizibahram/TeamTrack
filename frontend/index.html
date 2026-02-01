@@ -6,77 +6,213 @@
     <title>TeamTrack - Employee Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.tailwindcss.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="Logo2.png" type="image/png">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.tailwindcss.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
-<body class="bg-gradient-to-br from-black via-gray-900 to-black min-h-screen p-4 relative">
-    <div id="loading" class="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
-        <div class="text-center">
-            <img src="Logo2.png" alt="TeamTrack Logo" class="w-32 h-32 mx-auto mb-4 animate-bounce">
-            <p class="text-white text-xl font-semibold animate-pulse">Loading TeamTrack Dashboard...</p>
-            <div class="mt-4">
-                <div class="inline-block w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+<body class="bg-dark min-h-screen relative overflow-x-hidden">
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-gradient-orb orb-1"></div>
+        <div class="bg-gradient-orb orb-2"></div>
+        <div class="bg-gradient-orb orb-3"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-content">
+            <div class="logo-container">
+                <img src="Logo2.png" alt="TeamTrack Logo" class="loading-logo">
+                <div class="logo-glow"></div>
+            </div>
+            <h1 class="loading-title">TeamTrack</h1>
+            <p class="loading-subtitle">Loading Dashboard</p>
+            <div class="loading-bar-container">
+                <div class="loading-bar"></div>
+            </div>
+            <div class="loading-particles">
+                <span></span><span></span><span></span><span></span><span></span>
             </div>
         </div>
     </div>
-    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20 animate-float"></div>
-    <div class="absolute inset-0 bg-gradient-to-tl from-purple-900/20 via-transparent to-indigo-900/20 animate-pulse-slow"></div>
-    <div class="max-w-7xl mx-auto">
-        <header class="flex justify-between items-start mb-12 animate-fade-in">
-            <div class="flex items-center">
-                <img src="Logo2.png" alt="TeamTrack Logo" class="w-16 h-16 mr-4 animate-bounce">
-                <div>
-                    <h1 class="text-5xl font-extrabold text-white mb-4 drop-shadow-lg">
-                        <i class="fas fa-users text-cyan-400"></i> TeamTrack Dashboard
-                    </h1>
-                    <p class="text-xl text-gray-300">Real-time employee insights and updates</p>
-                </div>
-            </div>
-            <div class="flex flex-row space-x-4">
-                <div id="azizi-profile" class="text-right bg-white bg-opacity-10 backdrop-blur-lg p-4 rounded-xl shadow-2xl border border-white border-opacity-20 flex-1">
-                    <div class="flex items-center mb-2">
-                        <img id="azizi-photo" class="w-12 h-12 rounded-full mr-3 border-2 border-cyan-400 shadow-lg">
-                        <div>
-                            <h2 class="text-lg font-bold text-white">Azizi</h2>
-                            <p class="text-sm text-cyan-300">HOD of Software Department</p>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Header Section -->
+        <header class="header-section">
+            <div class="header-glass">
+                <div class="header-content">
+                    <!-- Logo & Title -->
+                    <div class="brand-section">
+                        <div class="logo-wrapper">
+                            <img src="Logo2.png" alt="TeamTrack" class="brand-logo">
+                            <div class="logo-pulse"></div>
+                        </div>
+                        <div class="brand-text">
+                            <h1 class="brand-title">
+                                <span class="gradient-text">Team</span>Track
+                            </h1>
+                            <p class="brand-subtitle">Real-time Employee Insights</p>
                         </div>
                     </div>
-                    <div id="azizi-message" class="text-sm text-gray-200"></div>
-                </div>
-                <div id="news" class="bg-white bg-opacity-10 backdrop-blur-lg p-4 rounded-xl shadow-2xl border border-white border-opacity-20 flex-1">
-                    <h3 class="text-lg font-bold text-white mb-2">Software Department News</h3>
-                    <div id="news-content"></div>
+
+                    <!-- Profile & News Cards -->
+                    <div class="info-cards">
+                        <!-- HOD Profile Card -->
+                        <div id="azizi-profile" class="glass-card profile-card">
+                            <div class="card-shine"></div>
+                            <div class="profile-header">
+                                <div class="profile-avatar-wrapper">
+                                    <img id="azizi-photo" class="profile-avatar" alt="Profile">
+                                    <div class="avatar-status online"></div>
+                                </div>
+                                <div class="profile-info">
+                                    <h2 class="profile-name">Azizi</h2>
+                                    <span class="profile-role">
+                                        <i class="fas fa-crown"></i> HOD Software
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="profile-message">
+                                <div class="message-icon">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <div id="azizi-message" class="message-content"></div>
+                            </div>
+                        </div>
+
+                        <!-- News Card -->
+                        <div id="news" class="glass-card news-card">
+                            <div class="card-shine"></div>
+                            <div class="news-header">
+                                <div class="news-icon">
+                                    <i class="fas fa-broadcast-tower"></i>
+                                </div>
+                                <h3 class="news-title">Department News</h3>
+                                <span class="live-badge">
+                                    <span class="live-dot"></span> LIVE
+                                </span>
+                            </div>
+                            <div id="news-content" class="news-content"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <div id="employees" class="mb-12">
-            <h2 class="text-3xl font-bold text-center mb-8 animate-fade-in text-white drop-shadow-lg">Today's Tasks and Attendance</h2>
-            <div class="bg-white bg-opacity-10 backdrop-blur-lg rounded-xl shadow-2xl overflow-hidden border border-white border-opacity-20">
-                <table id="employees-table" class="w-full table-auto">
-                    <thead class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
+        <!-- Stats Overview -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card glass-card" data-stat="present">
+                    <div class="stat-icon present">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-present">0</span>
+                        <span class="stat-label">Present Today</span>
+                    </div>
+                    <div class="stat-glow"></div>
+                </div>
+                <div class="stat-card glass-card" data-stat="absent">
+                    <div class="stat-icon absent">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-absent">0</span>
+                        <span class="stat-label">Absent</span>
+                    </div>
+                    <div class="stat-glow"></div>
+                </div>
+                <div class="stat-card glass-card" data-stat="late">
+                    <div class="stat-icon late">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-late">0</span>
+                        <span class="stat-label">Late Arrivals</span>
+                    </div>
+                    <div class="stat-glow"></div>
+                </div>
+                <div class="stat-card glass-card" data-stat="total">
+                    <div class="stat-icon total">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="stat-total">0</span>
+                        <span class="stat-label">Total Team</span>
+                    </div>
+                    <div class="stat-glow"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Today's Tasks Section -->
+        <section id="employees" class="section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h2 class="section-title">Today's Tasks & Attendance</h2>
+                <div class="section-line"></div>
+            </div>
+            <div class="table-container glass-card">
+                <div class="table-glow"></div>
+                <table id="employees-table" class="modern-table">
+                    <thead>
                         <tr>
-                            <th class="px-4 py-3 text-left">Photo</th>
-                            <th class="px-4 py-3 text-left">Name</th>
-                            <th class="px-4 py-3 text-left">Email</th>
-                            <th class="px-4 py-3 text-left">Role</th>
-                            <th class="px-4 py-3 text-left">Today's Tasks</th>
-                            <th class="px-4 py-3 text-left">Attendance</th>
+                            <th class="th-photo">Photo</th>
+                            <th class="th-name">Name</th>
+                            <th class="th-email">Email</th>
+                            <th class="th-role">Role</th>
+                            <th class="th-tasks">Today's Tasks</th>
+                            <th class="th-status">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-white divide-opacity-20"></tbody>
+                    <tbody></tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <div id="week-tabs-container" class="mt-12"></div>
-        <div id="weekly-report" class="mt-6"></div>
+        <!-- Week Selector -->
+        <section class="week-selector-section">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h2 class="section-title">Weekly Reports</h2>
+                <div class="section-line"></div>
+            </div>
+            <div id="week-tabs-container" class="week-tabs-wrapper"></div>
+        </section>
+
+        <!-- Weekly Report Section -->
+        <section id="weekly-report" class="section"></section>
+
+        <!-- Footer -->
+        <footer class="footer-section">
+            <div class="footer-glass">
+                <div class="footer-content">
+                    <div class="footer-brand">
+                        <img src="Logo2.png" alt="TeamTrack" class="footer-logo">
+                        <span>TeamTrack Dashboard</span>
+                    </div>
+                    <div class="footer-status">
+                        <span class="connection-status">
+                            <i class="fas fa-wifi"></i> Real-time Connected
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
+
     <script src="app.js"></script>
 </body>
 </html>
