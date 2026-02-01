@@ -15,6 +15,7 @@
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body class="bg-dark min-h-screen relative overflow-x-hidden">
     <!-- Animated Background -->
@@ -39,6 +40,19 @@
             </div>
             <div class="loading-particles">
                 <span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Notification -->
+    <div id="achievement-popup" class="achievement-popup">
+        <div class="achievement-content">
+            <div class="achievement-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div class="achievement-text">
+                <div class="achievement-title">Achievement Unlocked!</div>
+                <div class="achievement-name" id="achievement-name">Early Bird</div>
             </div>
         </div>
     </div>
@@ -107,6 +121,100 @@
             </div>
         </header>
 
+        <!-- Gamification Section -->
+        <section class="gamification-section">
+            <!-- Team Goals Progress -->
+            <div class="glass-card team-goals-card">
+                <div class="card-shine"></div>
+                <div class="goals-header">
+                    <div class="goals-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3 class="goals-title">Team Goals This Week</h3>
+                    <span class="goals-deadline">Ends Friday</span>
+                </div>
+                <div class="goals-list">
+                    <div class="goal-item">
+                        <div class="goal-info">
+                            <span class="goal-name"><i class="fas fa-users"></i> 95% Attendance Rate</span>
+                            <span class="goal-percentage" id="goal-attendance-percent">0%</span>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="goal-bar" id="goal-attendance-bar">
+                                <div class="goal-fill" style="width: 0%"></div>
+                                <div class="goal-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="goal-item">
+                        <div class="goal-info">
+                            <span class="goal-name"><i class="fas fa-tasks"></i> Complete All Tasks</span>
+                            <span class="goal-percentage" id="goal-tasks-percent">0%</span>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="goal-bar" id="goal-tasks-bar">
+                                <div class="goal-fill" style="width: 0%"></div>
+                                <div class="goal-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="goal-item">
+                        <div class="goal-info">
+                            <span class="goal-name"><i class="fas fa-clock"></i> On-Time Arrivals</span>
+                            <span class="goal-percentage" id="goal-ontime-percent">0%</span>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="goal-bar" id="goal-ontime-bar">
+                                <div class="goal-fill" style="width: 0%"></div>
+                                <div class="goal-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Performer -->
+            <div class="glass-card top-performer-card">
+                <div class="card-shine"></div>
+                <div class="top-performer-header">
+                    <div class="top-performer-icon">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h3 class="top-performer-title">Top Performer</h3>
+                    <span class="top-performer-badge">#1</span>
+                </div>
+                <div class="top-performer-content" id="top-performer-content">
+                    <div class="top-performer-avatar">
+                        <img id="top-performer-photo" src="" alt="Top Performer">
+                        <div class="top-performer-crown">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                    </div>
+                    <div class="top-performer-info">
+                        <div class="top-performer-name" id="top-performer-name">-</div>
+                        <div class="top-performer-role" id="top-performer-role">-</div>
+                        <div class="top-performer-stats">
+                            <div class="top-stat">
+                                <i class="fas fa-star"></i>
+                                <span id="top-performer-points">0 pts</span>
+                            </div>
+                            <div class="top-stat">
+                                <i class="fas fa-fire" style="color: #ff6b35;"></i>
+                                <span id="top-performer-attendance-streak">0 attendance streak</span>
+                            </div>
+                            <div class="top-stat">
+                                <i class="fas fa-tasks" style="color: #a855f7;"></i>
+                                <span id="top-performer-task-streak">0 task streak</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="top-performer-badges" id="top-performer-badges">
+                    <!-- Badges filled by JS -->
+                </div>
+            </div>
+        </section>
+
         <!-- Stats Overview -->
         <section class="stats-section">
             <div class="stats-grid">
@@ -153,6 +261,54 @@
             </div>
         </section>
 
+        <!-- Leaderboard Section -->
+        <section class="leaderboard-section">
+            <div class="section-header">
+                <div class="section-icon gold">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2 class="section-title">Employee Leaderboard</h2>
+                <div class="section-line"></div>
+            </div>
+            <div class="leaderboard-container">
+                <!-- Top 3 Podium -->
+                <div class="podium" id="podium">
+                    <div class="podium-item second" id="podium-2">
+                        <div class="podium-avatar">
+                            <img src="" alt="">
+                            <div class="podium-rank">2</div>
+                        </div>
+                        <div class="podium-name">-</div>
+                        <div class="podium-points">0 pts</div>
+                        <div class="podium-base"></div>
+                    </div>
+                    <div class="podium-item first" id="podium-1">
+                        <div class="podium-crown"><i class="fas fa-crown"></i></div>
+                        <div class="podium-avatar">
+                            <img src="" alt="">
+                            <div class="podium-rank">1</div>
+                        </div>
+                        <div class="podium-name">-</div>
+                        <div class="podium-points">0 pts</div>
+                        <div class="podium-base"></div>
+                    </div>
+                    <div class="podium-item third" id="podium-3">
+                        <div class="podium-avatar">
+                            <img src="" alt="">
+                            <div class="podium-rank">3</div>
+                        </div>
+                        <div class="podium-name">-</div>
+                        <div class="podium-points">0 pts</div>
+                        <div class="podium-base"></div>
+                    </div>
+                </div>
+                <!-- Leaderboard List -->
+                <div class="leaderboard-list" id="leaderboard-list">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </section>
+
         <!-- Today's Tasks Section -->
         <section id="employees" class="section">
             <div class="section-header">
@@ -171,6 +327,7 @@
                             <th class="th-name">Name</th>
                             <th class="th-email">Email</th>
                             <th class="th-role">Role</th>
+                            <th class="th-badges">Badges</th>
                             <th class="th-tasks">Today's Tasks</th>
                             <th class="th-status">Status</th>
                         </tr>

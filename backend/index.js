@@ -192,9 +192,13 @@ async function getAttendanceFromSlack(weekOffset = 0) {
                     // Check if check-in time is before or at 9:00 AM
                     const checkInHour = msgDate.getHours();
                     const checkInMinute = msgDate.getMinutes();
-                    // If check-in is after 9:00 AM, mark as Absent
-                    const isLate = checkInHour > 9 || (checkInHour === 9 && checkInMinute > 30)
-                    const status = isLate ? 'Absent' : 'Present';
+                    // Determine status: Present (on time), Late (after 9:00 AM), or Absent (not checked in)
+                    let status;
+                    if (checkInHour < 9 || (checkInHour === 9 && checkInMinute === 0)) {
+                        status = 'Present';  // On time (before or exactly at 9:00)
+                    } else {
+                        status = 'Late';     // After 9:00 AM
+                    }
                     const day = msgDate.toLocaleDateString('en-US', { weekday: 'long' });
                     if (!weeklyAttendance[day]) weeklyAttendance[day] = {};
                     // Update with latest status for the day

@@ -1,19 +1,19 @@
 // ============================================
 // TeamTrack - Modern Dashboard Application
-// Enhanced with smooth animations and effects
+// Enhanced with Gamification Features
 // ============================================
 
 // Utility Functions
 const utils = {
     // Animate number counter
     animateCounter: (element, target, duration = 1000) => {
-        const start = 0;
+        const start = parseInt(element.textContent) || 0;
         const startTime = performance.now();
         
         const updateCounter = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
             const current = Math.floor(start + (target - start) * easeProgress);
             element.textContent = current;
             
@@ -68,8 +68,405 @@ const utils = {
         elements.forEach((el, index) => {
             el.style.animationDelay = `${index * baseDelay}s`;
         });
+    },
+
+    // Trigger confetti effect
+    triggerConfetti: () => {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#00d4ff', '#a855f7', '#f472b6', '#ffd700']
+        });
     }
 };
+
+// Achievement System
+class AchievementSystem {
+    constructor() {
+        this.badges = {
+            earlyBird: { id: 'early-bird', icon: 'fa-sun', name: 'Early Bird', desc: 'Arrived before 9:00 AM' },
+            taskPoster: { id: 'task-poster', icon: 'fa-clipboard-list', name: 'Active Poster', desc: 'Posted tasks today' },
+            perfectWeek: { id: 'perfect-week', icon: 'fa-calendar-check', name: 'Perfect Week', desc: '100% attendance this week' },
+            consistent: { id: 'consistent', icon: 'fa-star', name: 'Consistent', desc: 'Posted tasks all week' },
+            streak5: { id: 'streak-5', icon: 'fa-fire', name: 'On Fire!', desc: '5-day attendance streak' }
+        };
+    }
+
+    // Calculate badges for an employee
+    calculateBadges(employee, weeklyAttendance) {
+        const badges = [];
+        
+        // Early Bird - check if arrived before 9:00 AM (based on not being late)
+        if (employee.attendance === 'Present') {
+            badges.push(this.badges.earlyBird);
+        }
+        
+        // Active Poster - has tasks posted today
+        if (employee.todayTasks.length > 0) {
+            badges.push(this.badges.taskPoster);
+        }
+        
+        // Perfect Week - check all days in weekly attendance
+        if (weeklyAttendance && this.hasPerfectWeek(employee.name, weeklyAttendance)) {
+            badges.push(this.badges.perfectWeek);
+        }
+        
+        // Consistent - posted tasks all week (has week tasks)
+        if (employee.weekTasks.length >= 5) {
+            badges.push(this.badges.consistent);
+        }
+        
+        // Streak - simulate streak based on attendance
+        if (employee.attendance === 'Present') {
+            const streakDays = Math.floor(Math.random() * 5) + 1; // Simulated for demo
+            if (streakDays >= 5) {
+                badges.push(this.badges.streak5);
+            }
+        }
+        
+        return badges;
+    }
+
+    hasPerfectWeek(employeeName, weeklyAttendance) {
+        const days = Object.keys(weeklyAttendance);
+        if (days.length < 5) return false;
+        
+        return days.every(day => {
+            const dayData = weeklyAttendance[day];
+            return dayData && dayData[employeeName] === 'Present';
+        });
+    }
+
+    // Render badges HTML
+    renderBadges(badges) {
+        if (badges.length === 0) {
+            return '<span style="color: var(--color-text-muted); font-size: 0.8rem;">-</span>';
+        }
+        
+        return `
+            <div class="badges-container">
+                ${badges.map(badge => `
+                    <div class="badge ${badge.id}" data-tooltip="${badge.name}: ${badge.desc}">
+                        <i class="fas ${badge.icon}"></i>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Show achievement popup
+    showAchievement(badgeName) {
+        const popup = document.getElementById('achievement-popup');
+        const nameEl = document.getElementById('achievement-name');
+        
+        nameEl.textContent = badgeName;
+        popup.classList.add('show');
+        
+        utils.triggerConfetti();
+        
+        setTimeout(() => {
+            popup.classList.remove('show');
+        }, 4000);
+    }
+}
+
+// Points & Level System
+class LevelSystem {
+    constructor() {
+        this.levels = [
+            { name: 'Novice', minPoints: 0, color: '#6b7280' },
+            { name: 'Contributor', minPoints: 100, color: '#00d4ff' },
+            { name: 'Expert', minPoints: 300, color: '#a855f7' },
+            { name: 'Master', minPoints: 600, color: '#ffd700' },
+            { name: 'Legend', minPoints: 1000, color: '#f472b6' }
+        ];
+    }
+
+    // Calculate points for an employee based on weekly performance
+    calculatePoints(employee, weeklyAttendance) {
+        let points = 0;
+        
+        // Points for weekly attendance (from weeklyAttendance data)
+        if (weeklyAttendance) {
+            Object.values(weeklyAttendance).forEach(dayData => {
+                if (dayData && dayData[employee.name]) {
+                    const status = dayData[employee.name];
+                    if (status === 'Present') {
+                        points += 20;  // On-time attendance
+                    } else if (status === 'Late') {
+                        points += 10;  // Late attendance
+                    }
+                    // Absent = 0 points
+                }
+            });
+        }
+        
+        // Points for today's attendance
+        if (employee.attendance === 'Present') points += 20;
+        if (employee.attendance === 'Late') points += 10;
+        
+        // Points for weekly tasks (consistent activity)
+        points += employee.weekTasks.length * 5;
+        
+        // Bonus for posting tasks today
+        if (employee.todayTasks.length > 0) {
+            points += 15;  // Daily activity bonus
+            points += employee.todayTasks.length * 3;  // Points per task posted
+        }
+        
+        // Early bird bonus (if present today and has tasks)
+        if (employee.attendance === 'Present' && employee.todayTasks.length > 0) {
+            points += 10;  // Early bird bonus for being on time AND productive
+        }
+        
+        return points;
+    }
+
+    // Get level info based on points
+    getLevelInfo(points) {
+        for (let i = this.levels.length - 1; i >= 0; i--) {
+            if (points >= this.levels[i].minPoints) {
+                const nextLevel = this.levels[i + 1];
+                return {
+                    current: this.levels[i],
+                    next: nextLevel,
+                    progress: nextLevel 
+                        ? ((points - this.levels[i].minPoints) / (nextLevel.minPoints - this.levels[i].minPoints)) * 100
+                        : 100
+                };
+            }
+        }
+        return { current: this.levels[0], next: this.levels[1], progress: 0 };
+    }
+
+    // Calculate attendance streak - consecutive days of being present (Present or Late)
+    calculateAttendanceStreak(employee, weeklyAttendance) {
+        if (!weeklyAttendance) return 0;
+        
+        let streak = 0;
+        const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        
+        // Count consecutive present days from the end of the week
+        for (let i = days.length - 1; i >= 0; i--) {
+            const dayData = weeklyAttendance[days[i]];
+            if (dayData && (dayData[employee.name] === 'Present' || dayData[employee.name] === 'Late')) {
+                streak++;
+            } else if (dayData && dayData[employee.name] === 'Absent') {
+                break; // Streak broken by absence
+            }
+            // If no data for that day, continue checking previous days
+        }
+        
+        return streak;
+    }
+
+    // Calculate task streak - consecutive days of posting tasks
+    calculateTaskStreak(employee, weeklyAttendance) {
+        // For task streak, we use weekTasks as indicator of activity
+        // In a real implementation, this would check daily task data
+        // For now, we'll estimate based on weekTasks count and today's tasks
+        
+        let streak = 0;
+        
+        // If posted tasks today, start counting
+        if (employee.todayTasks.length > 0) {
+            streak = 1;
+            
+            // Estimate based on weekly tasks (assuming consistent posting)
+            // If they have 5+ week tasks, they likely posted daily
+            if (employee.weekTasks.length >= 5) {
+                streak = Math.min(7, employee.weekTasks.length); // Cap at 7 days
+            } else if (employee.weekTasks.length >= 3) {
+                streak = Math.min(3, employee.weekTasks.length);
+            }
+        }
+        
+        return streak;
+    }
+}
+
+// Leaderboard Manager
+class LeaderboardManager {
+    constructor(achievementSystem, levelSystem) {
+        this.achievementSystem = achievementSystem;
+        this.levelSystem = levelSystem;
+        this.podium = document.getElementById('podium');
+        this.list = document.getElementById('leaderboard-list');
+    }
+
+    update(employees, weeklyAttendance) {
+        // Calculate scores for all employees
+        const rankedEmployees = employees
+            .filter(emp => emp.name !== 'Azizi')
+            .map(emp => {
+                const points = this.levelSystem.calculatePoints(emp, weeklyAttendance);
+                const badges = this.achievementSystem.calculateBadges(emp, weeklyAttendance);
+                return { ...emp, points, badges };
+            })
+            .sort((a, b) => b.points - a.points);
+
+        this.renderPodium(rankedEmployees.slice(0, 3));
+        this.renderList(rankedEmployees.slice(3));
+        
+        return rankedEmployees;
+    }
+
+    renderPodium(top3) {
+        const positions = [
+            { id: 'podium-1', index: 0, delay: 0 },
+            { id: 'podium-2', index: 1, delay: 0.1 },
+            { id: 'podium-3', index: 2, delay: 0.2 }
+        ];
+
+        positions.forEach(pos => {
+            const employee = top3[pos.index];
+            const el = document.getElementById(pos.id);
+            
+            if (employee && el) {
+                el.style.animationDelay = `${pos.delay}s`;
+                el.querySelector('.podium-avatar img').src = employee.photo;
+                el.querySelector('.podium-name').textContent = employee.name;
+                el.querySelector('.podium-points').textContent = `${employee.points} pts`;
+            }
+        });
+    }
+
+    renderList(remaining) {
+        this.list.innerHTML = remaining.map((emp, index) => `
+            <div class="leaderboard-item" style="animation-delay: ${index * 0.05}s">
+                <div class="leaderboard-rank">${index + 4}</div>
+                <img src="${emp.photo}" alt="${emp.name}" class="leaderboard-avatar">
+                <div class="leaderboard-info">
+                    <div class="leaderboard-name">${emp.name}</div>
+                    <div class="leaderboard-role">${emp.role || 'Team Member'}</div>
+                </div>
+                <div class="leaderboard-badges">
+                    ${emp.badges.slice(0, 3).map(badge => `
+                        <div class="badge ${badge.id}" style="width: 24px; height: 24px; font-size: 0.65rem;">
+                            <i class="fas ${badge.icon}"></i>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="leaderboard-points">${emp.points} pts</div>
+            </div>
+        `).join('');
+    }
+}
+
+// Team Goals Manager
+class TeamGoalsManager {
+    constructor() {
+        this.goals = {
+            attendance: { element: 'goal-attendance', target: 95 },
+            tasks: { element: 'goal-tasks', target: 90 },
+            ontime: { element: 'goal-ontime', target: 85 }
+        };
+    }
+
+    update(employees, weeklyAttendance) {
+        const nonAzizi = employees.filter(emp => emp.name !== 'Azizi');
+        const total = nonAzizi.length;
+        
+        if (total === 0) return;
+
+        // Calculate attendance rate
+        const present = nonAzizi.filter(emp => emp.attendance === 'Present').length;
+        const attendanceRate = Math.round((present / total) * 100);
+        
+        // Calculate task completion rate (simulated)
+        const tasksRate = Math.min(100, Math.round((nonAzizi.reduce((sum, emp) => sum + emp.todayTasks.length, 0) / (total * 3)) * 100));
+        
+        // Calculate on-time rate
+        const onTime = nonAzizi.filter(emp => emp.attendance === 'Present').length;
+        const onTimeRate = Math.round((onTime / total) * 100);
+
+        this.updateGoal('attendance', attendanceRate);
+        this.updateGoal('tasks', tasksRate);
+        this.updateGoal('ontime', onTimeRate);
+    }
+
+    updateGoal(type, value) {
+        const percentEl = document.getElementById(`${this.goals[type].element}-percent`);
+        const barEl = document.querySelector(`#${this.goals[type].element}-bar .goal-fill`);
+        const glowEl = document.querySelector(`#${this.goals[type].element}-bar .goal-glow`);
+        
+        if (percentEl && barEl) {
+            percentEl.textContent = `${value}%`;
+            barEl.style.width = `${value}%`;
+            if (glowEl) glowEl.style.width = `${value}%`;
+            
+            // Color based on progress
+            if (value >= 90) {
+                percentEl.style.color = 'var(--color-success)';
+            } else if (value >= 70) {
+                percentEl.style.color = 'var(--color-warning)';
+            } else {
+                percentEl.style.color = 'var(--color-danger)';
+            }
+        }
+    }
+}
+
+// Top Performer Manager
+class TopPerformerManager {
+    constructor(achievementSystem, levelSystem) {
+        this.achievementSystem = achievementSystem;
+        this.levelSystem = levelSystem;
+        this.photoEl = document.getElementById('top-performer-photo');
+        this.nameEl = document.getElementById('top-performer-name');
+        this.roleEl = document.getElementById('top-performer-role');
+        this.pointsEl = document.getElementById('top-performer-points');
+        this.attendanceStreakEl = document.getElementById('top-performer-attendance-streak');
+        this.taskStreakEl = document.getElementById('top-performer-task-streak');
+        this.badgesEl = document.getElementById('top-performer-badges');
+    }
+
+    update(topEmployee, weeklyAttendance) {
+        if (!topEmployee) return;
+
+        // Update photo
+        if (this.photoEl) {
+            this.photoEl.src = topEmployee.photo;
+        }
+
+        // Update name
+        if (this.nameEl) {
+            this.nameEl.textContent = topEmployee.name;
+        }
+
+        // Update role
+        if (this.roleEl) {
+            this.roleEl.textContent = topEmployee.role || 'Team Member';
+        }
+
+        // Update points
+        if (this.pointsEl) {
+            this.pointsEl.textContent = `${topEmployee.points} pts`;
+        }
+
+        // Update attendance streak
+        if (this.attendanceStreakEl) {
+            const attendanceStreak = this.levelSystem.calculateAttendanceStreak(topEmployee, weeklyAttendance);
+            this.attendanceStreakEl.textContent = `${attendanceStreak} day attendance streak`;
+        }
+
+        // Update task streak
+        if (this.taskStreakEl) {
+            const taskStreak = this.levelSystem.calculateTaskStreak(topEmployee, weeklyAttendance);
+            this.taskStreakEl.textContent = `${taskStreak} day task streak`;
+        }
+
+        // Update badges
+        if (this.badgesEl && topEmployee.badges) {
+            this.badgesEl.innerHTML = topEmployee.badges.slice(0, 5).map(badge => `
+                <div class="badge ${badge.id}" data-tooltip="${badge.name}: ${badge.desc}">
+                    <i class="fas ${badge.icon}"></i>
+                </div>
+            `).join('');
+        }
+    }
+}
 
 // Stats Manager
 class StatsManager {
@@ -157,12 +554,13 @@ class ProfileManager {
 
 // Employees Table Manager
 class EmployeesTableManager {
-    constructor() {
+    constructor(achievementSystem) {
         this.table = document.getElementById('employees-table');
         this.dataTable = null;
+        this.achievementSystem = achievementSystem;
     }
 
-    update(employees) {
+    update(employees, weeklyAttendance) {
         const tbody = this.table.querySelector('tbody');
         const filteredEmployees = employees.filter(emp => emp.name !== 'Azizi');
 
@@ -171,7 +569,10 @@ class EmployeesTableManager {
             this.dataTable.destroy();
         }
 
-        tbody.innerHTML = filteredEmployees.map((employee, index) => `
+        tbody.innerHTML = filteredEmployees.map((employee, index) => {
+            const badges = this.achievementSystem.calculateBadges(employee, weeklyAttendance);
+            
+            return `
             <tr style="animation-delay: ${index * 0.05}s">
                 <td>
                     <img src="${employee.photo}" alt="${employee.name}" class="employee-photo">
@@ -187,6 +588,9 @@ class EmployeesTableManager {
                         <i class="fas fa-briefcase"></i>
                         ${employee.role || 'Team Member'}
                     </span>
+                </td>
+                <td>
+                    ${this.achievementSystem.renderBadges(badges)}
                 </td>
                 <td>
                     <div class="task-list">
@@ -211,7 +615,7 @@ class EmployeesTableManager {
                     </span>
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
 
         // Initialize DataTable
         this.dataTable = $(this.table).DataTable({
@@ -228,10 +632,9 @@ class EmployeesTableManager {
                 }
             },
             columnDefs: [
-                { orderable: false, targets: [0, 4] }
+                { orderable: false, targets: [0, 4, 5] }
             ],
             drawCallback: () => {
-                // Re-apply animations after table draw
                 const rows = this.table.querySelectorAll('tbody tr');
                 utils.staggerAnimation(rows, 0.03);
             }
@@ -444,12 +847,18 @@ class LoadingManager {
 class TeamTrackApp {
     constructor() {
         this.loading = new LoadingManager();
+        this.achievementSystem = new AchievementSystem();
+        this.levelSystem = new LevelSystem();
+        
         this.stats = new StatsManager();
         this.news = new NewsManager();
         this.profile = new ProfileManager();
-        this.employeesTable = new EmployeesTableManager();
+        this.employeesTable = new EmployeesTableManager(this.achievementSystem);
         this.weeklyReport = new WeeklyReportManager();
         this.weekTabs = new WeekTabsManager();
+        this.leaderboard = new LeaderboardManager(this.achievementSystem, this.levelSystem);
+        this.teamGoals = new TeamGoalsManager();
+        this.topPerformer = new TopPerformerManager(this.achievementSystem, this.levelSystem);
         
         this.socket = null;
         this.currentData = null;
@@ -508,8 +917,17 @@ class TeamTrackApp {
         const azizi = employees.find(emp => emp.name === 'Azizi');
         this.profile.update(azizi);
 
+        // Update gamification features
+        const rankedEmployees = this.leaderboard.update(employees, weeklyAttendance);
+        this.teamGoals.update(employees, weeklyAttendance);
+        
+        // Update Top Performer - #1 ranked employee
+        if (rankedEmployees && rankedEmployees.length > 0) {
+            this.topPerformer.update(rankedEmployees[0], weeklyAttendance);
+        }
+
         // Update employees table
-        this.employeesTable.update(employees);
+        this.employeesTable.update(employees, weeklyAttendance);
 
         // Update weekly report
         this.weeklyReport.update(employees, weeklyAttendance, this.weekTabs.currentOffset);
@@ -576,10 +994,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Handle visibility change for performance
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        // Page is hidden - can pause animations
         document.body.classList.add('page-hidden');
     } else {
-        // Page is visible - resume animations
         document.body.classList.remove('page-hidden');
     }
 });
