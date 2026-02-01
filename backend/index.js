@@ -157,7 +157,8 @@ async function getAttendanceFromSlack(weekOffset = 0) {
         const nameMap = {
             "Nawid Sanginzai": "فدایی صاحب",
             "Mahmood Sahil": "Sahil",
-            "Muhsen Omari": "omari"
+            "Muhsen Omari": "omari",
+            "JamshidShinwari": "Fazal Rahman Waqar"
             // Add more mappings as needed
         };
 
@@ -192,7 +193,7 @@ async function getAttendanceFromSlack(weekOffset = 0) {
                     const checkInHour = msgDate.getHours();
                     const checkInMinute = msgDate.getMinutes();
                     // If check-in is after 9:00 AM, mark as Absent
-                    const isLate = checkInHour > 9 || (checkInHour === 9 && checkInMinute > 0);
+                    const isLate = checkInHour > 9 || (checkInHour === 9 && checkInMinute > 30)
                     const status = isLate ? 'Absent' : 'Present';
                     const day = msgDate.toLocaleDateString('en-US', { weekday: 'long' });
                     if (!weeklyAttendance[day]) weeklyAttendance[day] = {};
