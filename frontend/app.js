@@ -722,7 +722,7 @@ class EmployeeProfileModal {
                         </div>
                     </div>
                     <div class="modal-level-badge">
-                        <div class="level-icon">${levelInfo.current.icon}</div>
+
                         <div class="level-text">${levelInfo.current.name}</div>
                     </div>
                 </div>
@@ -832,23 +832,6 @@ class EmployeeProfileModal {
                 <h4><i class="fas fa-medal"></i> Achievements & Badges</h4>
                 <div class="badges-container">
                     ${badges.length > 0 ? achievementSystem.renderBadges(badges) : '<p style="color: var(--color-text-muted);">No badges earned yet. Keep working!</p>'}
-                </div>
-            </div>
-            
-            <div class="modal-section">
-                <h4><i class="fas fa-chart-bar"></i> 3-Month Activity History</h4>
-                <div class="history-chart">
-                    ${weeksHistory.map((week, idx) => `
-                        <div class="history-week" title="Week ${idx + 1}: ${week.tasks} tasks, ${week.completed} completed">
-                            <div class="history-bar" style="--bar-height: ${Math.min(week.tasks * 10, 100)}%"></div>
-                            <div class="history-completed" style="--completed-height: ${Math.min(week.completed * 10, 100)}%"></div>
-                            <span class="history-label">W${idx + 1}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="history-legend">
-                    <span><i class="fas fa-square" style="color: var(--color-primary);"></i> Tasks Posted</span>
-                    <span><i class="fas fa-square" style="color: var(--color-success);"></i> Tasks Completed</span>
                 </div>
             </div>
             

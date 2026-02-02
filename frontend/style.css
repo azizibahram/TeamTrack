@@ -2895,3 +2895,37 @@ body {
 .achievements-section h4 i {
     color: var(--color-primary);
 }
+
+/* Tasks Overview Big Numbers */
+.tasks-overview-body {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 2rem 1rem;
+}
+
+.task-big-number {
+    text-align: center;
+}
+
+.big-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.big-number.completed {
+    color: var(--color-success);
+}
+
+.big-number.assigned {
+    color: var(--color-primary);
+}
+
+.big-label {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
