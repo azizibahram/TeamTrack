@@ -206,18 +206,35 @@ class LevelSystem {
         if (employee.attendance === 'Present') points += 20;
         if (employee.attendance === 'Late') points += 10;
         
-        // Points for weekly tasks (consistent activity)
-        points += employee.weekTasks.length * 5;
+        // Points for in-progress tasks
+        points += (employee.weekTasks?.length || 0) * 3;
         
-        // Bonus for posting tasks today
-        if (employee.todayTasks.length > 0) {
-            points += 15;  // Daily activity bonus
-            points += employee.todayTasks.length * 3;  // Points per task posted
+        // Points for completed tasks (worth more!)
+        points += (employee.weekCompletedTasks?.length || 0) * 10;
+        
+        // Task completion rate bonus
+        const totalTasks = (employee.weekTasks?.length || 0) + (employee.weekCompletedTasks?.length || 0);
+        const completedTasks = employee.weekCompletedTasks?.length || 0;
+        if (totalTasks > 0) {
+            const completionRate = completedTasks / totalTasks;
+            if (completionRate === 1.0) {
+                points += 50;  // Perfect completion bonus
+            } else if (completionRate >= 0.8) {
+                points += 30;  // High completion bonus
+            } else if (completionRate >= 0.5) {
+                points += 15;  // Good completion bonus
+            }
         }
         
-        // Early bird bonus (if present today and has tasks)
-        if (employee.attendance === 'Present' && employee.todayTasks.length > 0) {
-            points += 10;  // Early bird bonus for being on time AND productive
+        // Daily activity bonus for completing tasks
+        if (employee.todayCompletedTasks?.length > 0) {
+            points += 20;  // Daily completion bonus
+            points += employee.todayCompletedTasks.length * 5;  // Points per completed task
+        }
+        
+        // Early bird bonus (if present today and completed tasks)
+        if (employee.attendance === 'Present' && employee.todayCompletedTasks?.length > 0) {
+            points += 15;  // Early bird + productive bonus
         }
         
         return points;
@@ -261,7 +278,9 @@ class LevelSystem {
         return streak;
     }
 
-    // Calculate task streak - consecutive days of posting tasks from Saturday (Friday is vacation)
+    // Calculate task streak - consecutive days of posting tasks from Saturday to Thursday
+    // Counts from Saturday forward to Thursday (Friday is vacation)
+    // Based on dailyTaskCounts which tracks in-progress tasks from tasks channel
     calculateTaskStreak(employee, weeklyAttendance) {
         if (!employee.dailyTaskCounts) {
             return 0;
@@ -272,14 +291,22 @@ class LevelSystem {
         const workDays = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
         
         // Count consecutive days with tasks from Saturday forward
+        // This matches how the weekly report shows in-progress tasks
         for (let i = 0; i < workDays.length; i++) {
             const day = workDays[i];
             const taskCount = employee.dailyTaskCounts[day] || 0;
             
+            // Count if employee posted tasks (in-progress) on that day
             if (taskCount > 0) {
                 streak++;
             } else {
-                break; // Streak broken when no tasks on a work day
+                // If we've already counted some days, stop here
+                // This means they had a streak but it ended
+                if (streak > 0) {
+                    break;
+                }
+                // If no streak started yet, continue checking
+                // (they might start their streak on Sunday or Monday)
             }
         }
         
@@ -294,9 +321,14 @@ class LeaderboardManager {
         this.levelSystem = levelSystem;
         this.podium = document.getElementById('podium');
         this.list = document.getElementById('leaderboard-list');
+        this.employees = [];
+        this.weeklyAttendance = null;
     }
 
     update(employees, weeklyAttendance) {
+        this.employees = employees;
+        this.weeklyAttendance = weeklyAttendance;
+        
         // Calculate scores for all employees
         const rankedEmployees = employees
             .filter(emp => emp.name !== 'Azizi')
@@ -309,6 +341,7 @@ class LeaderboardManager {
 
         this.renderPodium(rankedEmployees.slice(0, 3));
         this.renderList(rankedEmployees.slice(3));
+        this.bindClickEvents(rankedEmployees, weeklyAttendance, this.levelSystem, this.achievementSystem);
         
         return rankedEmployees;
     }
@@ -327,7 +360,9 @@ class LeaderboardManager {
             if (employee && el) {
                 el.style.animationDelay = `${pos.delay}s`;
                 el.querySelector('.podium-avatar img').src = employee.photo;
+                el.querySelector('.podium-avatar img').dataset.employeeId = employee.id;
                 el.querySelector('.podium-name').textContent = employee.name;
+                el.querySelector('.podium-name').dataset.employeeId = employee.id;
                 el.querySelector('.podium-points').textContent = `${employee.points} pts`;
             }
         });
@@ -335,11 +370,11 @@ class LeaderboardManager {
 
     renderList(remaining) {
         this.list.innerHTML = remaining.map((emp, index) => `
-            <div class="leaderboard-item" style="animation-delay: ${index * 0.05}s">
+            <div class="leaderboard-item" style="animation-delay: ${index * 0.05}s" data-employee-id="${emp.id}">
                 <div class="leaderboard-rank">${index + 4}</div>
-                <img src="${emp.photo}" alt="${emp.name}" class="leaderboard-avatar">
+                <img src="${emp.photo}" alt="${emp.name}" class="leaderboard-avatar" data-employee-id="${emp.id}">
                 <div class="leaderboard-info">
-                    <div class="leaderboard-name">${emp.name}</div>
+                    <div class="leaderboard-name" data-employee-id="${emp.id}">${emp.name}</div>
                     <div class="leaderboard-role">${emp.role || 'Team Member'}</div>
                 </div>
                 <div class="leaderboard-badges">
@@ -353,6 +388,47 @@ class LeaderboardManager {
             </div>
         `).join('');
     }
+    
+    bindClickEvents(employees, weeklyAttendance, levelSystem, achievementSystem) {
+        // Bind clicks for podium
+        const podiumAvatars = document.querySelectorAll('.podium-avatar img');
+        const podiumNames = document.querySelectorAll('.podium-name');
+        
+        podiumAvatars.forEach(img => {
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', (e) => {
+                const employeeId = e.target.dataset.employeeId;
+                const employee = employees.find(emp => emp.id === employeeId);
+                if (employee) {
+                    window.employeeModal.open(employee, weeklyAttendance, levelSystem, achievementSystem);
+                }
+            });
+        });
+        
+        podiumNames.forEach(name => {
+            name.style.cursor = 'pointer';
+            name.addEventListener('click', (e) => {
+                const employeeId = e.target.dataset.employeeId;
+                const employee = employees.find(emp => emp.id === employeeId);
+                if (employee) {
+                    window.employeeModal.open(employee, weeklyAttendance, levelSystem, achievementSystem);
+                }
+            });
+        });
+        
+        // Bind clicks for list items
+        const listItems = document.querySelectorAll('.leaderboard-item');
+        listItems.forEach(item => {
+            item.style.cursor = 'pointer';
+            item.addEventListener('click', (e) => {
+                const employeeId = item.dataset.employeeId;
+                const employee = employees.find(emp => emp.id === employeeId);
+                if (employee) {
+                    window.employeeModal.open(employee, weeklyAttendance, levelSystem, achievementSystem);
+                }
+            });
+        });
+    }
 }
 
 // Team Goals Manager
@@ -361,7 +437,7 @@ class TeamGoalsManager {
         this.goals = {
             attendance: { element: 'goal-attendance', target: 95 },
             tasks: { element: 'goal-tasks', target: 90 },
-            ontime: { element: 'goal-ontime', target: 85 }
+            completion: { element: 'goal-completion', target: 80 }
         };
     }
 
@@ -372,19 +448,29 @@ class TeamGoalsManager {
         if (total === 0) return;
 
         // Calculate attendance rate
-        const present = nonAzizi.filter(emp => emp.attendance === 'Present').length;
+        const present = nonAzizi.filter(emp => emp.attendance === 'Present' || emp.attendance === 'Late').length;
         const attendanceRate = Math.round((present / total) * 100);
         
-        // Calculate task completion rate (simulated)
-        const tasksRate = Math.min(100, Math.round((nonAzizi.reduce((sum, emp) => sum + emp.todayTasks.length, 0) / (total * 3)) * 100));
+        // Calculate task completion rate using done_tasks channel data
+        let totalTasks = 0;
+        let completedTasks = 0;
+        
+        nonAzizi.forEach(emp => {
+            const inProgress = emp.weekTasks?.length || 0;
+            const completed = emp.weekCompletedTasks?.length || 0;
+            totalTasks += inProgress + completed;
+            completedTasks += completed;
+        });
+        
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
         
         // Calculate on-time rate
         const onTime = nonAzizi.filter(emp => emp.attendance === 'Present').length;
         const onTimeRate = Math.round((onTime / total) * 100);
 
         this.updateGoal('attendance', attendanceRate);
-        this.updateGoal('tasks', tasksRate);
-        this.updateGoal('ontime', onTimeRate);
+        this.updateGoal('tasks', completionRate);
+        this.updateGoal('completion', onTimeRate);
     }
 
     updateGoal(type, value) {
@@ -553,15 +639,298 @@ class ProfileManager {
     }
 }
 
+// Employee Profile Modal Manager
+class EmployeeProfileModal {
+    constructor() {
+        this.modal = document.getElementById('employee-modal');
+        this.modalBody = document.getElementById('modal-body');
+        this.closeBtn = document.getElementById('modal-close');
+        this.currentData = null;
+        
+        this.bindEvents();
+    }
+    
+    bindEvents() {
+        // Close button click
+        this.closeBtn?.addEventListener('click', () => this.close());
+        
+        // Click outside to close
+        this.modal?.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.close();
+        });
+        
+        // Escape key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal?.classList.contains('active')) {
+                this.close();
+            }
+        });
+    }
+    
+    open(employee, weeklyAttendance, levelSystem, achievementSystem) {
+        if (!this.modal || !this.modalBody) return;
+        
+        this.currentData = { employee, weeklyAttendance };
+        
+        const points = levelSystem.calculatePoints(employee, weeklyAttendance);
+        const levelInfo = levelSystem.getLevelInfo(points);
+        const badges = achievementSystem.calculateBadges(employee, weeklyAttendance);
+        const attendanceStreak = levelSystem.calculateAttendanceStreak(employee, weeklyAttendance);
+        const taskStreak = levelSystem.calculateTaskStreak(employee, weeklyAttendance);
+        
+        // Calculate weekly stats
+        const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const presentDays = days.filter(day => {
+            const status = weeklyAttendance?.[day]?.[employee.name];
+            return status === 'Present' || status === 'Late';
+        }).length;
+        
+        const absentDays = days.filter(day => {
+            const status = weeklyAttendance?.[day]?.[employee.name];
+            return status === 'Absent';
+        }).length;
+        
+        const lateDays = days.filter(day => {
+            const status = weeklyAttendance?.[day]?.[employee.name];
+            return status === 'Late';
+        }).length;
+        
+        // Calculate task stats
+        const totalTasks = (employee.weekTasks?.length || 0) + (employee.weekCompletedTasks?.length || 0);
+        const completedTasks = employee.weekCompletedTasks?.length || 0;
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        
+        // Generate last 12 weeks (3 months) of mock history
+        const weeksHistory = this.generateWeeksHistory(employee, 12);
+        
+        // Calculate progress to next level
+        const nextLevelPoints = levelInfo.next ? levelInfo.next.minPoints : levelInfo.current.minPoints;
+        const currentLevelPoints = levelInfo.current.minPoints;
+        const pointsInLevel = points - currentLevelPoints;
+        const pointsNeeded = nextLevelPoints - currentLevelPoints;
+        const progressPercent = levelInfo.next ? Math.min(100, Math.round((pointsInLevel / pointsNeeded) * 100)) : 100;
+        
+        this.modalBody.innerHTML = `
+            <div class="modal-profile-card">
+                <div class="modal-profile-header">
+                    <img src="${employee.photo}" alt="${employee.name}" class="modal-avatar-large">
+                    <div class="modal-profile-info">
+                        <h2>${employee.name}</h2>
+                        <span class="modal-role-badge">${employee.role || 'Team Member'}</span>
+                        <div class="modal-contact-info">
+                            <span><i class="fas fa-envelope"></i> ${employee.email}</span>
+                        </div>
+                    </div>
+                    <div class="modal-level-badge">
+                        <div class="level-icon">${levelInfo.current.icon}</div>
+                        <div class="level-text">${levelInfo.current.name}</div>
+                    </div>
+                </div>
+                
+                <div class="modal-level-progress">
+                    <div class="progress-header">
+                        <span>Level Progress</span>
+                        <span>${points} / ${nextLevelPoints || 'MAX'} pts</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${progressPercent}%"></div>
+                    </div>
+                    <div class="progress-footer">
+                        ${levelInfo.next ? `<span>${nextLevelPoints - points} points to ${levelInfo.next.name}</span>` : '<span>Maximum level reached!</span>'}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-stats-grid">
+                <div class="modal-stat-card primary">
+                    <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                    <div class="stat-value">${attendanceStreak}</div>
+                    <div class="stat-label">Attendance Streak</div>
+                </div>
+                <div class="modal-stat-card success">
+                    <div class="stat-icon"><i class="fas fa-tasks"></i></div>
+                    <div class="stat-value">${taskStreak}</div>
+                    <div class="stat-label">Task Streak</div>
+                </div>
+                <div class="modal-stat-card info">
+                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-value">${presentDays}/6</div>
+                    <div class="stat-label">Days Present</div>
+                </div>
+                <div class="modal-stat-card warning">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-value">${lateDays}</div>
+                    <div class="stat-label">Late Days</div>
+                </div>
+                <div class="modal-stat-card danger">
+                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+                    <div class="stat-value">${absentDays}</div>
+                    <div class="stat-label">Absent Days</div>
+                </div>
+                <div class="modal-stat-card purple">
+                    <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                    <div class="stat-value">${badges.length}</div>
+                    <div class="stat-label">Badges Earned</div>
+                </div>
+            </div>
+            
+            <div class="modal-tasks-overview">
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Task Completion</span>
+                    </div>
+                    <div class="overview-body">
+                        <div class="completion-ring">
+                            <svg viewBox="0 0 100 100">
+                                <circle class="ring-bg" cx="50" cy="50" r="45"></circle>
+                                <circle class="ring-progress" cx="50" cy="50" r="45" style="stroke-dashoffset: ${283 - (283 * completionRate / 100)}"></circle>
+                            </svg>
+                            <div class="ring-text">${completionRate}%</div>
+                        </div>
+                        <div class="completion-stats">
+                            <div class="comp-stat">
+                                <span class="comp-number">${employee.weekTasks?.length || 0}</span>
+                                <span class="comp-label">In Progress</span>
+                            </div>
+                            <div class="comp-stat">
+                                <span class="comp-number">${completedTasks}</span>
+                                <span class="comp-label">Completed</span>
+                            </div>
+                            <div class="comp-stat">
+                                <span class="comp-number">${totalTasks}</span>
+                                <span class="comp-label">Total</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overview-card">
+                    <div class="overview-header">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>This Week's Attendance</span>
+                    </div>
+                    <div class="overview-body">
+                        <div class="attendance-grid">
+                            ${days.slice(0, 6).map(day => {
+                                const status = weeklyAttendance?.[day]?.[employee.name] || 'Absent';
+                                const statusClass = status.toLowerCase();
+                                const icon = status === 'Present' ? 'fa-check' : status === 'Late' ? 'fa-clock' : 'fa-times';
+                                return `
+                                    <div class="attendance-day ${statusClass}">
+                                        <span class="day-name">${day.slice(0, 3)}</span>
+                                        <i class="fas ${icon}"></i>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-section achievements-section">
+                <h4><i class="fas fa-medal"></i> Achievements & Badges</h4>
+                <div class="badges-container">
+                    ${badges.length > 0 ? achievementSystem.renderBadges(badges) : '<p style="color: var(--color-text-muted);">No badges earned yet. Keep working!</p>'}
+                </div>
+            </div>
+            
+            <div class="modal-section">
+                <h4><i class="fas fa-chart-bar"></i> 3-Month Activity History</h4>
+                <div class="history-chart">
+                    ${weeksHistory.map((week, idx) => `
+                        <div class="history-week" title="Week ${idx + 1}: ${week.tasks} tasks, ${week.completed} completed">
+                            <div class="history-bar" style="--bar-height: ${Math.min(week.tasks * 10, 100)}%"></div>
+                            <div class="history-completed" style="--completed-height: ${Math.min(week.completed * 10, 100)}%"></div>
+                            <span class="history-label">W${idx + 1}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="history-legend">
+                    <span><i class="fas fa-square" style="color: var(--color-primary);"></i> Tasks Posted</span>
+                    <span><i class="fas fa-square" style="color: var(--color-success);"></i> Tasks Completed</span>
+                </div>
+            </div>
+            
+            <div class="modal-tasks-section">
+                <div class="task-column">
+                    <h4><i class="fas fa-tasks"></i> In Progress (${employee.weekTasks?.length || 0})</h4>
+                    <div class="modal-tasks-list">
+                        ${employee.weekTasks?.length > 0 ? employee.weekTasks.map(task => `
+                            <div class="modal-task-item in-progress">
+                                <i class="fas fa-circle"></i>
+                                <span>${task.text}</span>
+                            </div>
+                        `).join('') : '<p class="empty-state">No tasks in progress</p>'}
+                    </div>
+                </div>
+                
+                <div class="task-column">
+                    <h4><i class="fas fa-check-circle"></i> Completed (${employee.weekCompletedTasks?.length || 0})</h4>
+                    <div class="modal-tasks-list">
+                        ${(employee.weekCompletedTasks || []).length > 0 ? (employee.weekCompletedTasks || []).map(task => `
+                            <div class="modal-task-item completed">
+                                <i class="fas fa-check-circle"></i>
+                                <span>${task.text}</span>
+                            </div>
+                        `).join('') : '<p class="empty-state">No tasks completed</p>'}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    generateWeeksHistory(employee, numWeeks) {
+        // Generate mock historical data based on current employee activity
+        const history = [];
+        const baseTasks = employee.weekTasks?.length || 0;
+        const baseCompleted = employee.weekCompletedTasks?.length || 0;
+        
+        for (let i = numWeeks - 1; i >= 0; i--) {
+            // Create some variation in historical data
+            const variation = Math.random() * 0.5 + 0.75; // 0.75 to 1.25
+            const tasks = Math.max(0, Math.round(baseTasks * variation * (1 - i * 0.02)));
+            const completed = Math.max(0, Math.min(tasks, Math.round(baseCompleted * variation * (1 - i * 0.02))));
+            
+            history.push({ tasks, completed });
+        }
+        
+        return history;
+    }
+    
+    close() {
+        if (!this.modal) return;
+        this.modal.classList.remove('active');
+        document.body.style.overflow = '';
+        this.currentData = null;
+    }
+}
+
+// Create global modal instance
+window.employeeModal = null;
+
 // Employees Table Manager
 class EmployeesTableManager {
-    constructor(achievementSystem) {
+    constructor(achievementSystem, levelSystem) {
         this.table = document.getElementById('employees-table');
         this.dataTable = null;
         this.achievementSystem = achievementSystem;
+        this.levelSystem = levelSystem;
+        this.employees = [];
+        this.weeklyAttendance = null;
+        
+        // Create global modal instance if not exists
+        if (!window.employeeModal) {
+            window.employeeModal = new EmployeeProfileModal();
+        }
     }
 
     update(employees, weeklyAttendance) {
+        this.employees = employees;
+        this.weeklyAttendance = weeklyAttendance;
         const tbody = this.table.querySelector('tbody');
         const filteredEmployees = employees.filter(emp => emp.name !== 'Azizi');
 
@@ -574,15 +943,12 @@ class EmployeesTableManager {
             const badges = this.achievementSystem.calculateBadges(employee, weeklyAttendance);
             
             return `
-            <tr style="animation-delay: ${index * 0.05}s">
+            <tr style="animation-delay: ${index * 0.05}s" data-employee-id="${employee.id}">
                 <td>
-                    <img src="${employee.photo}" alt="${employee.name}" class="employee-photo">
+                    <img src="${employee.photo}" alt="${employee.name}" class="employee-photo" style="cursor: pointer;" data-employee-id="${employee.id}">
                 </td>
                 <td>
-                    <div class="employee-name">${employee.name}</div>
-                </td>
-                <td>
-                    <div class="employee-email">${employee.email}</div>
+                    <div class="employee-name" style="cursor: pointer;" data-employee-id="${employee.id}">${employee.name}</div>
                 </td>
                 <td>
                     <span class="employee-role">
@@ -597,7 +963,7 @@ class EmployeesTableManager {
                     <div class="task-list">
                         ${employee.todayTasks.slice(0, 3).map(task => `
                             <div class="task-item">
-                                <i class="fas fa-check-circle"></i>
+                                <i class="fas fa-circle" style="color: var(--color-warning);"></i>
                                 <span>${task.text}</span>
                             </div>
                         `).join('')}
@@ -606,6 +972,25 @@ class EmployeesTableManager {
                                 <i class="fas fa-ellipsis-h"></i>
                                 <span>+${employee.todayTasks.length - 3} more tasks</span>
                             </div>
+                        ` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="task-list">
+                        ${(employee.todayCompletedTasks || []).slice(0, 3).map(task => `
+                            <div class="task-item">
+                                <i class="fas fa-check-circle" style="color: var(--color-success);"></i>
+                                <span>${task.text}</span>
+                            </div>
+                        `).join('')}
+                        ${(employee.todayCompletedTasks || []).length > 3 ? `
+                            <div class="task-item" style="opacity: 0.6;">
+                                <i class="fas fa-ellipsis-h"></i>
+                                <span>+${employee.todayCompletedTasks.length - 3} more done</span>
+                            </div>
+                        ` : ''}
+                        ${(employee.todayCompletedTasks || []).length === 0 ? `
+                            <span style="color: var(--color-text-muted); font-size: 0.85rem;">-</span>
                         ` : ''}
                     </div>
                 </td>
@@ -638,7 +1023,24 @@ class EmployeesTableManager {
             drawCallback: () => {
                 const rows = this.table.querySelectorAll('tbody tr');
                 utils.staggerAnimation(rows, 0.03);
+                this.bindRowClicks();
             }
+        });
+        
+        this.bindRowClicks();
+    }
+    
+    bindRowClicks() {
+        // Bind click events to employee photos and names
+        const clickableElements = this.table.querySelectorAll('.employee-photo, .employee-name');
+        clickableElements.forEach(el => {
+            el.addEventListener('click', (e) => {
+                const employeeId = e.target.dataset.employeeId;
+                const employee = this.employees.find(emp => emp.id === employeeId);
+                if (employee && window.employeeModal) {
+                    window.employeeModal.open(employee, this.weeklyAttendance, this.levelSystem, this.achievementSystem);
+                }
+            });
         });
     }
 }
@@ -648,9 +1050,14 @@ class WeeklyReportManager {
     constructor() {
         this.container = document.getElementById('weekly-report');
         this.dataTable = null;
+        this.employees = [];
+        this.weeklyAttendance = null;
     }
 
     update(employees, weeklyAttendance, weekOffset) {
+        this.employees = employees;
+        this.weeklyAttendance = weeklyAttendance;
+        
         if (!weeklyAttendance || Object.keys(weeklyAttendance).length === 0) {
             this.container.innerHTML = '';
             return;
@@ -662,8 +1069,8 @@ class WeeklyReportManager {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
 
-        const weekLabel = weekOffset === 0 
-            ? 'This Week Report' 
+        const weekLabel = weekOffset === 0
+            ? 'This Week Report'
             : `Week: ${utils.formatDate(weekStart)} - ${utils.formatDate(weekEnd)}`;
 
         const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -686,29 +1093,56 @@ class WeeklyReportManager {
                         <tr>
                             <th>Employee</th>
                             ${dayLabels.map(day => `<th>${day}</th>`).join('')}
-                            <th>Weekly Tasks</th>
+                            <th>In Progress</th>
+                            <th>Completed</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${filteredEmployees.map((employee, index) => `
-                            <tr style="animation-delay: ${index * 0.05}s">
+                            <tr style="animation-delay: ${index * 0.05}s" data-employee-id="${employee.id}">
                                 <td>
-                                    <div class="weekly-employee">
-                                        <img src="${employee.photo}" alt="${employee.name}">
+                                    <div class="weekly-employee" style="cursor: pointer;" data-employee-id="${employee.id}">
+                                        <img src="${employee.photo}" alt="${employee.name}" data-employee-id="${employee.id}">
                                         <div class="weekly-employee-info">
-                                            <span class="weekly-employee-name">${employee.name}</span>
+                                            <span class="weekly-employee-name" data-employee-id="${employee.id}">${employee.name}</span>
                                             <span class="weekly-employee-email">${employee.email}</span>
                                         </div>
                                     </div>
                                 </td>
                                 ${days.map(day => {
-                                    const status = weeklyAttendance[day] && weeklyAttendance[day][employee.name];
-                                    const statusClass = status ? utils.getAttendanceClass(status) : 'empty';
-                                    const icon = status ? utils.getAttendanceIcon(status) : '';
+                                    // Get attendance status from weeklyAttendance data
+                                    let status = weeklyAttendance[day] && weeklyAttendance[day][employee.name];
+                                    
+                                    // Determine if this day is in the future
+                                    const dayIndex = days.indexOf(day);
+                                    const today = new Date();
+                                    const currentDayIndex = (today.getDay() + 1) % 7; // Saturday = 0, Sunday = 1, etc.
+                                    const isFutureDay = dayIndex > currentDayIndex;
+                                    
+                                    // If no status found:
+                                    // - Future days: show empty
+                                    // - Past/current days: mark as Absent
+                                    if (!status) {
+                                        if (isFutureDay) {
+                                            // Future day - show empty
+                                            return `
+                                                <td>
+                                                    <div class="attendance-dot empty" data-tooltip="${day}: Future">
+                                                    </div>
+                                                </td>
+                                            `;
+                                        } else {
+                                            // Past or current day - mark as Absent
+                                            status = 'Absent';
+                                        }
+                                    }
+                                    
+                                    const statusClass = utils.getAttendanceClass(status);
+                                    const icon = utils.getAttendanceIcon(status);
                                     return `
                                         <td>
-                                            <div class="attendance-dot ${statusClass}" data-tooltip="${day}: ${status || 'No data'}">
-                                                ${icon ? `<i class="fas ${icon}"></i>` : ''}
+                                            <div class="attendance-dot ${statusClass}" data-tooltip="${day}: ${status}">
+                                                <i class="fas ${icon}"></i>
                                             </div>
                                         </td>
                                     `;
@@ -717,7 +1151,7 @@ class WeeklyReportManager {
                                     <div class="task-list">
                                         ${employee.weekTasks.slice(0, 2).map(task => `
                                             <div class="task-item">
-                                                <i class="fas fa-tasks"></i>
+                                                <i class="fas fa-circle" style="color: var(--color-warning); font-size: 0.5rem;"></i>
                                                 <span>${task.text}</span>
                                             </div>
                                         `).join('')}
@@ -727,6 +1161,24 @@ class WeeklyReportManager {
                                                 <span>+${employee.weekTasks.length - 2} more</span>
                                             </div>
                                         ` : ''}
+                                        ${employee.weekTasks.length === 0 ? `<span style="color: var(--color-text-muted); font-size: 0.8rem;">-</span>` : ''}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="task-list">
+                                        ${(employee.weekCompletedTasks || []).slice(0, 2).map(task => `
+                                            <div class="task-item">
+                                                <i class="fas fa-check-circle" style="color: var(--color-success);"></i>
+                                                <span>${task.text}</span>
+                                            </div>
+                                        `).join('')}
+                                        ${(employee.weekCompletedTasks || []).length > 2 ? `
+                                            <div class="task-item" style="opacity: 0.6;">
+                                                <i class="fas fa-ellipsis-h"></i>
+                                                <span>+${employee.weekCompletedTasks.length - 2} more done</span>
+                                            </div>
+                                        ` : ''}
+                                        ${(employee.weekCompletedTasks || []).length === 0 ? `<span style="color: var(--color-text-muted); font-size: 0.8rem;">-</span>` : ''}
                                     </div>
                                 </td>
                             </tr>
@@ -756,7 +1208,24 @@ class WeeklyReportManager {
             drawCallback: () => {
                 const rows = document.querySelectorAll('#weekly-table tbody tr');
                 utils.staggerAnimation(rows, 0.03);
+                this.bindRowClicks();
             }
+        });
+        
+        this.bindRowClicks();
+    }
+    
+    bindRowClicks() {
+        // Bind click events to employee names and photos in weekly report
+        const clickableElements = document.querySelectorAll('.weekly-employee, .weekly-employee img, .weekly-employee-name');
+        clickableElements.forEach(el => {
+            el.addEventListener('click', (e) => {
+                const employeeId = e.target.dataset.employeeId || e.target.closest('[data-employee-id]')?.dataset.employeeId;
+                const employee = this.employees.find(emp => emp.id === employeeId);
+                if (employee && window.employeeModal) {
+                    window.employeeModal.open(employee, this.weeklyAttendance, window.levelSystem, window.achievementSystem);
+                }
+            });
         });
     }
 }
@@ -854,7 +1323,7 @@ class TeamTrackApp {
         this.stats = new StatsManager();
         this.news = new NewsManager();
         this.profile = new ProfileManager();
-        this.employeesTable = new EmployeesTableManager(this.achievementSystem);
+        this.employeesTable = new EmployeesTableManager(this.achievementSystem, this.levelSystem);
         this.weeklyReport = new WeeklyReportManager();
         this.weekTabs = new WeekTabsManager();
         this.leaderboard = new LeaderboardManager(this.achievementSystem, this.levelSystem);
@@ -878,6 +1347,9 @@ class TeamTrackApp {
 
             // Connect to real-time updates
             this.connectSocket();
+            
+            // Initialize print button
+            this.initPrintButton();
 
             // Hide loading screen
             this.loading.hide();
@@ -886,6 +1358,15 @@ class TeamTrackApp {
             console.error('Error initializing app:', error);
             this.showError('Failed to load dashboard data');
             this.loading.hide();
+        }
+    }
+    
+    initPrintButton() {
+        const printBtn = document.getElementById('print-button');
+        if (printBtn) {
+            printBtn.addEventListener('click', () => {
+                window.print();
+            });
         }
     }
 
@@ -932,6 +1413,9 @@ class TeamTrackApp {
 
         // Update weekly report
         this.weeklyReport.update(employees, weeklyAttendance, this.weekTabs.currentOffset);
+        
+        // Bind click events for leaderboard after UI update
+        this.leaderboard.bindClickEvents(employees, weeklyAttendance, this.levelSystem, this.achievementSystem);
     }
 
     async handleWeekChange(weekOffset) {

@@ -225,12 +225,19 @@ async function getAttendanceFromSlack(weekOffset = 0) {
 // Aggregate data
 async function getEmployeesData(weekOffset = 0) {
     const users = await getSlackUsers();
+    
+    // Fetch tasks from both channels
     const tasksChannelId = await getChannelIdByName(process.env.SLACK_CHANNEL_ID);
+    const doneTasksChannelId = await getChannelIdByName(process.env.SLACK_DONE_TASKS_CHANNEL_ID);
+    
     if (!tasksChannelId) {
         console.error('Tasks channel not found');
         return [];
     }
-    const messages = await getChannelMessages(tasksChannelId);
+    
+    const tasksMessages = await getChannelMessages(tasksChannelId);
+    const doneTasksMessages = doneTasksChannelId ? await getChannelMessages(doneTasksChannelId) : [];
+    
     const { current: currentAttendance, weekly: weeklyAttendance } = await getAttendanceFromSlack(weekOffset);
     // Get news from general channel - only today's messages
     const newsChannelId = await getChannelIdByName(process.env.SLACK_NEWS_CHANNEL_ID);
@@ -255,12 +262,26 @@ async function getEmployeesData(weekOffset = 0) {
         if (!profile || !profile.email) continue;
         const email = profile.email;
 
-        // Tasks: filter messages by user or mentions
-        const userMessages = messages.filter(msg => msg.user === user.id || msg.text.includes(`<@${user.id}>`));
+        // Tasks: filter messages by user or mentions from tasks channel
+        const userTasksMessages = tasksMessages.filter(msg => msg.user === user.id || msg.text.includes(`<@${user.id}>`));
+        
+        // Done tasks: filter messages from done_tasks channel
+        const userDoneTasksMessages = doneTasksMessages.filter(msg => msg.user === user.id || msg.text.includes(`<@${user.id}>`));
+        
         const today = new Date().toDateString();
-        const todayTasks = userMessages.filter(msg => new Date(msg.ts * 1000).toDateString() === today).slice(0, 5).map(msg => ({
+        
+        // In-progress tasks (from tasks channel)
+        const todayTasks = userTasksMessages.filter(msg => new Date(msg.ts * 1000).toDateString() === today).slice(0, 5).map(msg => ({
             text: msg.text,
-            timestamp: msg.ts
+            timestamp: msg.ts,
+            status: 'in-progress'
+        }));
+        
+        // Completed tasks (from done_tasks channel)
+        const todayCompletedTasks = userDoneTasksMessages.filter(msg => new Date(msg.ts * 1000).toDateString() === today).slice(0, 5).map(msg => ({
+            text: msg.text,
+            timestamp: msg.ts,
+            status: 'completed'
         }));
         
         // This week: from Saturday to today
@@ -268,19 +289,32 @@ async function getEmployeesData(weekOffset = 0) {
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() - (now.getDay() + 1) % 7); // Saturday
         startOfWeek.setHours(0, 0, 0, 0);
-        const weekTasks = userMessages.filter(msg => new Date(msg.ts * 1000) >= startOfWeek).slice(0, 10).map(msg => ({
+        
+        // Weekly in-progress tasks
+        const weekTasks = userTasksMessages.filter(msg => new Date(msg.ts * 1000) >= startOfWeek).slice(0, 10).map(msg => ({
             text: msg.text,
-            timestamp: msg.ts
+            timestamp: msg.ts,
+            status: 'in-progress'
+        }));
+        
+        // Weekly completed tasks
+        const weekCompletedTasks = userDoneTasksMessages.filter(msg => new Date(msg.ts * 1000) >= startOfWeek).slice(0, 10).map(msg => ({
+            text: msg.text,
+            timestamp: msg.ts,
+            status: 'completed'
         }));
         
         // Calculate daily task counts for the week (for streak calculation)
         const dailyTaskCounts = {};
+        const dailyCompletedCounts = {};
         const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         days.forEach(day => {
             dailyTaskCounts[day] = 0;
+            dailyCompletedCounts[day] = 0;
         });
         
-        userMessages.forEach(msg => {
+        // Count in-progress tasks per day
+        userTasksMessages.forEach(msg => {
             const msgDate = new Date(msg.ts * 1000);
             if (msgDate >= startOfWeek) {
                 const dayName = msgDate.toLocaleDateString('en-US', { weekday: 'long' });
@@ -289,9 +323,21 @@ async function getEmployeesData(weekOffset = 0) {
                 }
             }
         });
+        
+        // Count completed tasks per day
+        userDoneTasksMessages.forEach(msg => {
+            const msgDate = new Date(msg.ts * 1000);
+            if (msgDate >= startOfWeek) {
+                const dayName = msgDate.toLocaleDateString('en-US', { weekday: 'long' });
+                if (dailyCompletedCounts[dayName] !== undefined) {
+                    dailyCompletedCounts[dayName]++;
+                }
+            }
+        });
 
         // Attendance: from Slack, default to Absent if no check-in this week
         const userAttendance = currentAttendance[user.real_name] || 'Absent';
+        
         employees.push({
             id: user.id,
             name: user.real_name,
@@ -299,8 +345,11 @@ async function getEmployeesData(weekOffset = 0) {
             photo: profile.image_192,
             role: profile.title || '',
             todayTasks,
+            todayCompletedTasks,
             weekTasks,
+            weekCompletedTasks,
             dailyTaskCounts,
+            dailyCompletedCounts,
             attendance: userAttendance
         });
     }

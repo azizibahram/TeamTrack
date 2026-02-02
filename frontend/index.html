@@ -160,11 +160,11 @@
                     </div>
                     <div class="goal-item">
                         <div class="goal-info">
-                            <span class="goal-name"><i class="fas fa-clock"></i> On-Time Arrivals</span>
-                            <span class="goal-percentage" id="goal-ontime-percent">0%</span>
+                            <span class="goal-name"><i class="fas fa-check-circle"></i> Task Completion Rate</span>
+                            <span class="goal-percentage" id="goal-completion-percent">0%</span>
                         </div>
                         <div class="goal-progress">
-                            <div class="goal-bar" id="goal-ontime-bar">
+                            <div class="goal-bar" id="goal-completion-bar">
                                 <div class="goal-fill" style="width: 0%"></div>
                                 <div class="goal-glow"></div>
                             </div>
@@ -325,10 +325,10 @@
                         <tr>
                             <th class="th-photo">Photo</th>
                             <th class="th-name">Name</th>
-                            <th class="th-email">Email</th>
                             <th class="th-role">Role</th>
                             <th class="th-badges">Badges</th>
                             <th class="th-tasks">Today's Tasks</th>
+                            <th class="th-done">Done Tasks</th>
                             <th class="th-status">Status</th>
                         </tr>
                     </thead>
@@ -352,6 +352,11 @@
         <!-- Weekly Report Section -->
         <section id="weekly-report" class="section"></section>
 
+        <!-- Print Button -->
+        <button id="print-button" class="print-button" title="Print Weekly Report">
+            <i class="fas fa-print"></i>
+        </button>
+
         <!-- Footer -->
         <footer class="footer-section">
             <div class="footer-glass">
@@ -368,6 +373,21 @@
                 </div>
             </div>
         </footer>
+    </div>
+
+    <!-- Employee Profile Modal -->
+    <div id="employee-modal" class="employee-modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Employee Profile</h2>
+                <button class="modal-close" id="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Filled by JS -->
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

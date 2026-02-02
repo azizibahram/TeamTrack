@@ -2180,3 +2180,718 @@ body {
     visibility: visible;
     transform: translateX(-50%) translateY(-4px);
 }
+
+/* ============================================
+   Employee Modal
+   ============================================ */
+.employee-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+}
+
+.employee-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    width: 40px;
+    height: 40px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.modal-profile {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.modal-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--color-primary);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.modal-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.modal-info p {
+    color: var(--color-text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.modal-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.modal-stat {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.modal-stat-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.modal-stat-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-top: 0.25rem;
+}
+
+.modal-section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+
+.modal-section h4 {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-section h4 i {
+    color: var(--color-primary);
+}
+
+/* ============================================
+   Print Styles for Weekly Report
+   ============================================ */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 1cm;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .bg-animation,
+    .header-section,
+    .gamification-section,
+    .stats-section,
+    .leaderboard-section,
+    #employees,
+    .week-selector-section,
+    .footer-section,
+    .loading-screen,
+    .achievement-popup,
+    .print-button {
+        display: none !important;
+    }
+    
+    #weekly-report {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        page-break-after: always;
+    }
+    
+    #weekly-report .section-header {
+        display: flex !important;
+        margin-bottom: 1rem !important;
+        border-bottom: 2px solid #333 !important;
+        padding-bottom: 0.5rem !important;
+    }
+    
+    #weekly-report .section-title {
+        font-size: 18pt !important;
+        color: #333 !important;
+    }
+    
+    #weekly-report .glass-card {
+        background: white !important;
+        border: 1px solid #333 !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+    }
+    
+    .weekly-table {
+        font-size: 9pt !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+    
+    .weekly-table th,
+    .weekly-table td {
+        padding: 0.4rem !important;
+        border: 1px solid #333 !important;
+        color: black !important;
+        vertical-align: top !important;
+    }
+    
+    .weekly-table th {
+        background: #e0e0e0 !important;
+        color: black !important;
+        font-weight: bold !important;
+    }
+    
+    .weekly-table tr:nth-child(even) {
+        background: #f9f9f9 !important;
+    }
+    
+    /* Employee cell with profile */
+    .weekly-employee {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+    
+    .weekly-employee img {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        border: 1px solid #333 !important;
+    }
+    
+    .weekly-employee-name {
+        font-weight: bold !important;
+        font-size: 10pt !important;
+    }
+    
+    .weekly-employee-email {
+        font-size: 8pt !important;
+        color: #666 !important;
+    }
+    
+    /* Attendance dots */
+    .attendance-dot {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 10pt !important;
+        border-radius: 50% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: white !important;
+        font-weight: bold !important;
+    }
+    
+    .attendance-dot.present {
+        background: #28a745 !important;
+    }
+    
+    .attendance-dot.late {
+        background: #ffc107 !important;
+        color: black !important;
+    }
+    
+    .attendance-dot.absent {
+        background: #dc3545 !important;
+    }
+    
+    .attendance-dot.empty {
+        background: #e0e0e0 !important;
+        color: #999 !important;
+    }
+    
+    /* Task lists in print */
+    .task-list {
+        font-size: 8pt !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+    }
+    
+    .task-item {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 0.3rem !important;
+        line-height: 1.3 !important;
+    }
+    
+    .task-item i {
+        flex-shrink: 0 !important;
+        margin-top: 2px !important;
+    }
+    
+    /* Column widths */
+    .weekly-table th:first-child,
+    .weekly-table td:first-child {
+        width: 15% !important;
+        min-width: 120px !important;
+    }
+    
+    .weekly-table th:nth-child(2),
+    .weekly-table th:nth-child(3),
+    .weekly-table th:nth-child(4),
+    .weekly-table th:nth-child(5),
+    .weekly-table th:nth-child(6),
+    .weekly-table th:nth-child(7),
+    .weekly-table th:nth-child(8) {
+        width: 8% !important;
+        text-align: center !important;
+    }
+    
+    .weekly-table th:nth-child(9),
+    .weekly-table th:nth-child(10) {
+        width: 14% !important;
+    }
+}
+
+/* Print button for weekly report */
+.print-button {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.25rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-fast);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.print-button:hover {
+    transform: scale(1.1) rotate(10deg);
+    box-shadow: var(--shadow-glow);
+}
+
+/* ============================================
+   Enhanced Employee Profile Modal Styles
+   ============================================ */
+
+.modal-profile-card {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(157, 0, 255, 0.1));
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    border: 1px solid var(--glass-border);
+    margin-bottom: 1.5rem;
+}
+
+.modal-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--color-primary);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+}
+
+.modal-profile-info {
+    flex: 1;
+}
+
+.modal-profile-info h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-role-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.modal-contact-info {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.modal-contact-info i {
+    color: var(--color-primary);
+    margin-right: 0.5rem;
+}
+
+.modal-level-badge {
+    text-align: center;
+    padding: 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    min-width: 100px;
+}
+
+.level-icon {
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+}
+
+.level-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.modal-level-progress {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.progress-bar-container {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.progress-footer {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-align: right;
+}
+
+/* Stats Grid */
+.modal-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+
+.modal-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow);
+}
+
+.modal-stat-card.primary { border-top: 3px solid var(--color-primary); }
+.modal-stat-card.success { border-top: 3px solid var(--color-success); }
+.modal-stat-card.info { border-top: 3px solid var(--color-info); }
+.modal-stat-card.warning { border-top: 3px solid var(--color-warning); }
+.modal-stat-card.danger { border-top: 3px solid var(--color-danger); }
+.modal-stat-card.purple { border-top: 3px solid #9d00ff; }
+
+.stat-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+/* Tasks Overview */
+.modal-tasks-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.overview-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+}
+
+.overview-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--glass-border);
+    font-weight: 600;
+}
+
+.overview-header i {
+    color: var(--color-primary);
+}
+
+.overview-body {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.completion-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.completion-ring svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 8;
+}
+
+.ring-progress {
+    fill: none;
+    stroke: var(--color-success);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    transition: stroke-dashoffset 0.5s ease;
+}
+
+.ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.completion-stats {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.comp-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comp-stat:last-child {
+    border-bottom: none;
+}
+
+.comp-number {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.comp-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+/* Attendance Grid */
+.attendance-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+}
+
+.attendance-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.attendance-day.present {
+    background: rgba(40, 167, 69, 0.2);
+    border: 1px solid var(--color-success);
+}
+
+.attendance-day.late {
+    background: rgba(255, 193, 7, 0.2);
+    border: 1px solid var(--color-warning);
+}
+
+.attendance-day.absent {
+    background: rgba(220, 53, 69, 0.2);
+    border: 1px solid var(--color-danger);
+}
+
+.attendance-day .day-name {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.attendance-day i {
+    font-size: 1rem;
+}
+
+.attendance-day.present i {
+    color: var(--color-success);
+}
+
+.attendance-day.late i {
+    color: var(--color-warning);
+}
+
+.attendance-day.absent i {
+    color: var(--color-danger);
+}
+
+/* Tasks Section */
+.modal-tasks-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.task-column {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+}
+
+.task-column h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.task-column h4 i {
+    color: var(--color-primary);
+}
+
+.empty-state {
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.achievements-section {
+    margin-bottom: 1.5rem;
+}
+
+.achievements-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.achievements-section h4 i {
+    color: var(--color-primary);
+}
