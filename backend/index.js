@@ -206,14 +206,15 @@ async function getAttendanceFromSlack(weekOffset = 0) {
                 }
             }
         }
-        // Also create current attendance map
+        // Get today's date and build current attendance map (only today's attendance)
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
         const currentAttendance = {};
-        Object.keys(weeklyAttendance).forEach(day => {
-            Object.keys(weeklyAttendance[day]).forEach(name => {
-                currentAttendance[name] = weeklyAttendance[day][name];
+        if (weeklyAttendance[today]) {
+            Object.keys(weeklyAttendance[today]).forEach(name => {
+                currentAttendance[name] = weeklyAttendance[today][name];
             });
-        });
-        console.log('Current attendance:', currentAttendance);
+        }
+        console.log('Current attendance (today only):', currentAttendance);
         console.log('Weekly attendance:', weeklyAttendance);
         return { current: currentAttendance, weekly: weeklyAttendance };
     } catch (error) {
